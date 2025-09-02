@@ -1,0 +1,67 @@
+body {
+  padding: 10px;
+}
+
+.editor-content {
+  &:focus {
+    outline: none;
+  }
+
+  /* Custom selection màu */
+  ::selection {
+    background: rgba(59, 130, 246, 0.3); // tailwind blue-500/30
+  }
+
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+}
+
+.NAME-custom-dropdown {
+  position: relative;
+
+  .NAME-custom-dropdown-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+    transition: clip-path 0.3s ease-in-out;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--vcn-border-gray-cl);
+    z-index: 10;
+    padding: 6px;
+
+    .NAME-custom-dropdown-option {
+      display: flex;
+      align-items: center;
+      padding: 2px 6px;
+      font-size: 1rem;
+      line-height: 1.5;
+      width: 100%;
+      cursor: pointer;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: var(--vcn-hover-gray-cl);
+      }
+      &.active {
+        background-color: var(--vcn-hover-gray-cl);
+      }
+    }
+  }
+
+  &[data-open="true"] {
+    .NAME-custom-dropdown-content {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+  }
+}

@@ -1,0 +1,1 @@
+npx sass --watch ./styles/scss:../wysiwyg/public/styles --no-source-map

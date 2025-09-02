@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "es6",
+    "rootDir": "./scripts",
+    "outDir": "../wysiwyg/public/scripts",
+    "strict": true,
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "noImplicitAny": true,
+    "paths": {
+      "@/*": ["./scripts/*"]
+    }
+  },
+  "include": ["scripts/**/*"],
+  "exclude": ["styles/**/*", "node_modules/**/*"]
+}

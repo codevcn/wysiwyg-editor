@@ -1,0 +1,48 @@
+Tree view of: D:\D-Documents\Testing\wysiwyg
+
+├── print_tree.py
+├── project_tree.txt
+├── wysiwyg
+│   ├── .prettierrc.json
+│   ├── dev.cmd
+│   ├── nodemon.json
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   ├── scripts
+│   │   │   ├── editor-frame.js
+│   │   │   ├── helpers
+│   │   │   │   └── helpers.js
+│   │   │   └── main.js
+│   │   └── styles
+│   │       ├── custom.css
+│   │       └── tw-output.css
+│   └── src
+│       ├── app.js
+│       ├── routes
+│       │   └── index.js
+│       └── views
+│           ├── pages
+│           │   └── home.ejs
+│           └── partials
+│               ├── footer.ejs
+│               └── header.ejs
+└── wysiwyg-build
+    ├── .prettierrc.json
+    ├── comp-sass.cmd
+    ├── dev.cmd
+    ├── package-lock.json
+    ├── package.json
+    ├── scripts
+    │   ├── editor-frame.ts
+    │   ├── helpers
+    │   │   └── helpers.ts
+    │   └── main.ts
+    ├── styles
+    │   ├── scss
+    │   │   └── custom.scss
+    │   └── tailwind
+    │       └── tw-input.css
+    ├── tsconfig.json
+    ├── tw.cmd
+    └── vite.config.ts
