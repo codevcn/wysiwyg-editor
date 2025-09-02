@@ -58,3 +58,29 @@ body {
 .NAME-custom-dropdown[data-open=true] .NAME-custom-dropdown-content {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
+
+.NAME-editor-content ol,
+.NAME-editor-content ul {
+  padding-left: 0;
+}
+.NAME-editor-content li {
+  position: relative;
+  padding-left: 25px;
+}
+.NAME-editor-content li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.NAME-editor-content ol {
+  list-style: none;
+}
+.NAME-editor-content ol li {
+  counter-increment: item;
+}
+.NAME-editor-content ol li::before {
+  content: counter(item) ".";
+}
+.NAME-editor-content ul {
+  list-style-type: disc;
+}
