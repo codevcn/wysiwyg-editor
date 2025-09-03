@@ -37,11 +37,20 @@ class EditorContent {
     })
   }
 
+  private insertNewTopBlockElement(): void {
+    const latestTopBlockElement = CodeVCNEditorHelper.findLatestTopBlockElement()
+    if (latestTopBlockElement) {
+      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(latestTopBlockElement)
+    } else {
+      this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
+    }
+  }
+
   private bindBeforeInputEventListener(): void {
     this.contentElement.addEventListener("beforeinput", (e) => {
       if (e.inputType === "insertParagraph") {
         e.preventDefault()
-        CodeVCNEditorHelper.insertNewTopBlockElementAfterCurrentCaret()
+        this.insertNewTopBlockElement()
       }
     })
   }

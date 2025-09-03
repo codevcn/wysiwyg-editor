@@ -50,13 +50,26 @@ class BlockquoteStylish {
     return node
   }
 
+  private unblockquote(selection: Selection): void {
+    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
+    if (topBlockElement) {
+      const blockquoteElementFirstChild = topBlockElement.querySelector(
+        this.blockQuoteTagName.toLowerCase()
+      ) as HTMLElement
+      if (blockquoteElementFirstChild) {
+        topBlockElement.replaceWith(...blockquoteElementFirstChild.childNodes)
+      }
+    }
+    this.currentBlockquoteElement = null
+  }
+
   private makeBlockquoteOnButtonClick(): void {
     const selection = window.getSelection()
     if (!selection) return
     // bắt buộc phải check bằng selection hiện tại khi tạo blockquote bằng click on button, vì
     // khi tạo blockquote mới thì chưa biết caret có nằm trong blockquote hay không
     if (this.checkIfIsInBlockquote(selection)) {
-      this.exitBlockquote()
+      this.unblockquote(selection)
       return
     }
     const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
