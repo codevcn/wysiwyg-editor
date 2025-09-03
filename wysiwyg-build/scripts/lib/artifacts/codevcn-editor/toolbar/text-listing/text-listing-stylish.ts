@@ -1,15 +1,9 @@
 import { ETextListingType } from "@/enums/global-enums"
-import { DOMHelpers } from "../../helpers/DOMHelpers"
+import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper"
 import { editorContent } from "../../content/editor-content"
-
-type TGetListTypeAtCaretResult = {
-  listingType: ETextListingType
-  liElement: HTMLElement
-} | null
 
 class TextListingStylish {
   private currentTagName: string = ""
-  private isNowEmptyLine: boolean = false
 
   constructor() {}
 
@@ -17,26 +11,29 @@ class TextListingStylish {
     this.currentTagName = listingType === ETextListingType.NUMBERED_LIST ? "OL" : "UL"
   }
 
-  private setIsNowEmptyLine(isNowEmptyLine: boolean): void {
-    this.isNowEmptyLine = isNowEmptyLine
-  }
-
-  private getClosestListLineElement(selection: Selection): HTMLElement | null {
+  private getClosestListLineElement(selection?: Selection | null): HTMLElement | null {
     if (!selection || selection.rangeCount === 0) return null
 
-    let node = selection.anchorNode
+    let elementOfSelection: HTMLElement
+    const node = selection.anchorNode
     if (node && node.nodeType === Node.TEXT_NODE) {
-      node = node.parentNode // nếu caret nằm trong text thì lấy cha
+      elementOfSelection = node.parentNode as HTMLElement // nếu caret nằm trong text thì lấy cha
+    } else {
+      elementOfSelection = node as HTMLElement
     }
 
-    const li = node && (node as HTMLElement).closest("li")
-    if (editorContent.getContentElement().contains(li)) {
-      return li
+    const editorContentElement = editorContent.getContentElement()
+    if (elementOfSelection.tagName === "LI") {
+      if (editorContentElement.contains(elementOfSelection)) {
+        return elementOfSelection
+      }
+    } else if (elementOfSelection.tagName === this.currentTagName) {
+      return elementOfSelection.lastElementChild as HTMLElement
     }
     return null
   }
 
-  private createNewLine(currentLiElement: HTMLElement, selection: Selection): void {
+  private insertNewLine(currentLiElement: HTMLElement, selection: Selection): void {
     // Tách selection ra khỏi li hiện tại
     const range = selection.getRangeAt(0)
     const after = range.extractContents()
@@ -61,43 +58,72 @@ class TextListingStylish {
   }
 
   private isOnEmptyLine(liElement: HTMLElement): boolean {
-    return liElement.innerHTML === "<br>" || liElement.innerHTML === ""
+    const trimmedInnerHTML = liElement.innerHTML.trim()
+    return trimmedInnerHTML === "<br>" || trimmedInnerHTML === ""
   }
 
   private deleteLine(liElement: HTMLElement): void {
     liElement.remove()
-    editorContent.insertNewTopBlockElementAndFocusCaret()
   }
 
   private isOnListLine(): boolean {
     return !!this.currentTagName
   }
 
-  private wrapTopBlockByListingLine(topBlockElement: HTMLElement): void {
-    const topBlockChildNodes = topBlockElement.childNodes
-    const ol = document.createElement(this.currentTagName)
-    const li = document.createElement("li")
-    li.innerHTML = "<br>"
-    li.replaceChildren(...topBlockChildNodes)
-    ol.appendChild(li)
-    topBlockElement.replaceChildren(ol)
+  private createNewList(...nodes: Node[]): HTMLElement {
+    const list = document.createElement(this.currentTagName)
+    const line = document.createElement("li")
+    line.innerHTML = "<br>"
+    if (nodes.length > 0) {
+      line.replaceChildren(...nodes)
+    }
+    list.appendChild(line)
+    return list
   }
 
+  private wrapElementContentByNewList(element: HTMLElement): void {
+    element.replaceChildren(this.createNewList(...element.childNodes))
+  }
+
+  /**
+   * Tạo danh sách: Nếu caret nằm trong li thì tạo li mới, nếu li hiện tại rỗng thì xóa li, nếu caret nằm ngoài li thì tạo danh sách
+   * @param selection Selection của user
+   */
   private makeListing(selection: Selection) {
     const listLineElement = this.getClosestListLineElement(selection)
     if (listLineElement) {
       if (this.isOnEmptyLine(listLineElement)) {
         this.deleteLine(listLineElement)
+        editorContent.insertNewTopBlockElementAndFocusCaret()
       } else {
-        this.createNewLine(listLineElement, selection)
+        this.insertNewLine(listLineElement, selection)
       }
     } else {
       const anchorNode = selection.anchorNode!
-      const topBlockElement = DOMHelpers.getTopBlockElementFromNode(
+      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromNode(
         anchorNode.nodeType === Node.TEXT_NODE ? (anchorNode.parentNode as HTMLElement) : (anchorNode as HTMLElement)
       )
       if (topBlockElement) {
-        this.wrapTopBlockByListingLine(topBlockElement)
+        this.wrapElementContentByNewList(topBlockElement)
+      }
+    }
+  }
+
+  private insertNewListInsideLine(lineElement: HTMLElement): void {
+    const newList = this.createNewList()
+    lineElement.appendChild(newList)
+  }
+
+  private makeNestedListing(selection: Selection): void {
+    const listLineElement = this.getClosestListLineElement(selection)
+    if (listLineElement) {
+      if (this.isOnEmptyLine(listLineElement)) {
+        this.deleteLine(listLineElement)
+        const selection = window.getSelection()
+        const currentLineElement = this.getClosestListLineElement(selection)
+        if (currentLineElement) {
+          this.insertNewListInsideLine(currentLineElement)
+        }
       }
     }
   }
@@ -115,6 +141,11 @@ class TextListingStylish {
       const selection = editorContent.checkIsFocusingInEditorContent()
       if (!selection || selection.rangeCount === 0) return
       this.makeListing(selection)
+    } else if (e.key === "Tab") {
+      e.preventDefault()
+      const selection = editorContent.checkIsFocusingInEditorContent()
+      if (!selection || selection.rangeCount === 0) return
+      this.makeNestedListing(selection)
     }
   }
 

@@ -1,21 +1,19 @@
-import type { TToolbarButtonCommand } from "@/types/global-types"
+type TButtonClickCallback<TAction extends string> = (action: TAction, value?: string) => void
 
-type TButtonClickCallback = (command: TToolbarButtonCommand, value?: string) => void
-
-export class ToolbarButton {
+export class ToolbarButton<TAction extends string> {
   element: HTMLElement
-  command: TToolbarButtonCommand
+  action: TAction
   value?: string
 
   constructor(el: HTMLElement) {
     this.element = el
-    this.command = (el.getAttribute("data-command") as TToolbarButtonCommand) || ""
+    this.action = (el.getAttribute("data-action") as TAction) || ("" as TAction)
     this.value = el.getAttribute("data-value") || undefined
   }
 
-  onClick(callback: TButtonClickCallback) {
+  onClick(callback: TButtonClickCallback<TAction>) {
     this.element.addEventListener("click", () => {
-      callback(this.command, this.value)
+      callback(this.action, this.value)
     })
   }
 }

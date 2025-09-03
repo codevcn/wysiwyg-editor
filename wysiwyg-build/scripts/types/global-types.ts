@@ -1,12 +1,17 @@
-import type { ETextStylingType, ETextListingType } from "@/enums/global-enums"
+import type { EToolbarAction } from "@/enums/global-enums.js"
 
-export type TToolbarButtonCommand = ETextStylingType | ETextListingType
+export type TToolbarButtonType = "button" | "select"
 
 export type TToolbarAction = {
-  command: ETextStylingType | ETextListingType
-  label: string
-  type: "button" | "select"
+  action: EToolbarAction
+  label: HTMLElement["innerHTML"]
+  type: TToolbarButtonType
 } & Partial<{
-  options: { value: string; label: string }[]
+  options: ({
+    value: string
+    label: HTMLElement["innerHTML"]
+  } & Partial<{
+    className: string
+  }>)[]
   className: string
 }>

@@ -1,11 +1,11 @@
 import { html } from "lit-html"
-import { HTMLElementHelper } from "@/utils/helpers.js"
-import { textListingStylish } from "../toolbar/text-listing/text-listing-stylish"
+import { textListingStylish } from "../toolbar/text-listing/text-listing-stylish.js"
+import { CodeVCNEditorHelper } from "../helpers/codevcn-editor-helper.js"
+import { blockquoteStylish } from "../toolbar/blockquote/blockquote-stylish.js"
 
 class EditorContent {
   private contentElement: HTMLElement
   private contentElementName: string = "NAME-editor-content"
-  private topBlockElementTagName: string = "P"
 
   constructor() {
     this.contentElement = this.initContentEl()
@@ -25,19 +25,30 @@ class EditorContent {
           spellcheck="false"
         ></div>
       `
-    return HTMLElementHelper.createFromRenderer(Renderer)
+    return CodeVCNEditorHelper.createFromRenderer(Renderer)
   }
 
-  bindKeydownEventListener(): void {
+  private bindKeydownEventListener(): void {
     this.contentElement.addEventListener("keydown", (e) => {
       queueMicrotask(() => {
         textListingStylish.onAction(undefined, e)
+        blockquoteStylish.onAction(undefined, e)
       })
     })
   }
 
-  initEventListeners(): void {
+  private bindBeforeInputEventListener(): void {
+    this.contentElement.addEventListener("beforeinput", (e) => {
+      if (e.inputType === "insertParagraph") {
+        e.preventDefault()
+        CodeVCNEditorHelper.insertNewTopBlockElementAfterCurrentCaret()
+      }
+    })
+  }
+
+  private initEventListeners(): void {
     this.bindKeydownEventListener()
+    this.bindBeforeInputEventListener()
   }
 
   getContentElement(): HTMLElement {
@@ -54,7 +65,7 @@ class EditorContent {
   }
 
   insertNewTopBlockElementAndFocusCaret(): HTMLElement {
-    const topBlockElement = document.createElement(this.topBlockElementTagName)
+    const topBlockElement = document.createElement(CodeVCNEditorHelper.topBlockElementTagName)
     topBlockElement.innerHTML = "<br>"
     this.contentElement.appendChild(topBlockElement)
 

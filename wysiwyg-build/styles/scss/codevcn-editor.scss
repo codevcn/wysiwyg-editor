@@ -1,0 +1,157 @@
+@mixin editor-content-blockquote-rules {
+  border-left: 4px solid #ccc; /* đường kẻ bên trái */
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  background: #f9f9f9; /* nền xám nhạt */
+  color: #555; /* chữ xám */
+
+  p {
+    display: block;
+  }
+}
+
+@mixin editor-content-tags-rules {
+  ol,
+  ul {
+    padding-left: 15px;
+  }
+
+  li {
+    position: relative;
+    padding-left: 23px;
+  }
+
+  ol {
+    list-style: none;
+    counter-reset: item; // reset counter cho mỗi ol mới
+
+    li {
+      counter-increment: item;
+
+      &::before {
+        content: counter(item) ".";
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+    }
+  }
+
+  ul {
+    list-style: none;
+    list-style-position: inside;
+
+    li {
+      &::before {
+        content: "";
+        background-image: url("/assets/images/codevcn-editor/list-bullet.svg");
+        background-position: right;
+        position: absolute;
+        left: 0;
+        top: 0.2em;
+        width: 1.3rem;
+        height: 1.3rem;
+      }
+    }
+  }
+
+  h1,
+  h2,
+  h3,
+  p {
+    display: inline-block;
+  }
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 700;
+  }
+  p {
+    font-size: 1rem;
+  }
+
+  blockquote {
+    @include editor-content-blockquote-rules;
+  }
+}
+
+@mixin editor-content-dropdown-rules {
+  position: relative;
+
+  .NAME-custom-dropdown-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+    transition: clip-path 0.2s ease-in-out;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: #fff;
+    border-radius: 8px;
+    border: 1px solid var(--vcn-border-gray-cl);
+    z-index: 10;
+    padding: 6px;
+
+    .NAME-custom-dropdown-option {
+      display: flex;
+      align-items: center;
+      padding: 2px 6px;
+      line-height: 1.5;
+      width: 100%;
+      cursor: pointer;
+      border-radius: 4px;
+
+      &:hover {
+        background-color: var(--vcn-hover-gray-cl);
+      }
+      &.active {
+        background-color: var(--vcn-hover-gray-cl);
+      }
+    }
+  }
+
+  &[data-open="true"] {
+    .NAME-custom-dropdown-content {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+  }
+}
+
+.NAME-codevcn-editor {
+  font-size: 1rem;
+
+  .NAME-editor-content {
+    &:focus {
+      outline: none;
+    }
+
+    /* Custom selection màu */
+    ::selection {
+      background: rgba(59, 130, 246, 0.3); // tailwind blue-500/30
+    }
+
+    /* Custom scrollbar */
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+    &::-webkit-scrollbar-thumb {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+
+    @include editor-content-tags-rules;
+  }
+
+  .NAME-custom-dropdown {
+    @include editor-content-dropdown-rules;
+  }
+}

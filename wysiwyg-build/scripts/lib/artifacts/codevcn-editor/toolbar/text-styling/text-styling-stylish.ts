@@ -1,6 +1,6 @@
-import { ETextStylingType } from "@/enums/global-enums"
-import { DOMHelpers } from "../../helpers/DOMHelpers"
-import { editorContent } from "../../content/editor-content"
+import { ETextStylingType } from "@/enums/global-enums.js"
+import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper.js"
+import { editorContent } from "../../content/editor-content.js"
 
 class TextStylingStylish {
   private currentStylingType: ETextStylingType | null = null
@@ -13,6 +13,10 @@ class TextStylingStylish {
     [ETextStylingType.ITALIC]: ["I", "EM"],
     [ETextStylingType.UNDERLINE]: ["U", "INS"],
     [ETextStylingType.STRIKE_THROUGH]: ["S", "DEL", "STRIKE"],
+    [ETextStylingType.HEADING_1]: ["H1"],
+    [ETextStylingType.HEADING_2]: ["H2"],
+    [ETextStylingType.HEADING_3]: ["H3"],
+    [ETextStylingType.PARAGRAPH]: ["P"],
   }
 
   constructor() {}
@@ -46,7 +50,7 @@ class TextStylingStylish {
         ? (selectionRange.startContainer.parentNode as HTMLElement)
         : (selectionRange.startContainer as HTMLElement)
     if (!node) return
-    this.parentStylingElement = DOMHelpers.getClosestElementOfNode(
+    this.parentStylingElement = CodeVCNEditorHelper.getClosestElementOfNode(
       node,
       (node) => this.ifTagNameIsCurrentStyling(node.tagName) && node.contains(selectionRange.endContainer)
     )
@@ -154,7 +158,7 @@ class TextStylingStylish {
   }
 
   /**
-   * Kiểm tra xem phần tử parent có text node nào không nằm trong tagNameAllowed hay không
+   * Kiểm tra xem phần tử parent có chứa text node nào ko được bọc bởi tagNameAllowed hay ko
    * @param {HTMLElement} parent - Phần tử parent
    */
   private makeStylingToTextNodeOutsideTags(parent: HTMLElement): void {
@@ -182,6 +186,9 @@ class TextStylingStylish {
     }
   }
 
+  /**
+   * Xóa các tag rỗng
+   */
   private removeEmptyTags(parent: HTMLElement): void {
     const elements = parent.children
     for (const element of elements) {
@@ -199,7 +206,7 @@ class TextStylingStylish {
     this.setParentStylingElement(selectionRange)
 
     if (this.parentStylingElement) {
-      // check xem selection có nằm hoàn toàn trong 1 styling tag không
+      // nếu selection nằm hoàn toàn trong 1 styling tag thì xóa styling của selection
       this.unstylingFromSelection(selectionRange)
     } else {
       // nếu không nằm hoàn toàn trong styling tag thì bọc content bởi styling tag và xóa các tag giống styling tag

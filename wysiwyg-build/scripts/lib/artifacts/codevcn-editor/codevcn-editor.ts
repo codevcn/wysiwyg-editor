@@ -1,25 +1,21 @@
-import { HTMLElementHelper } from "@/utils/helpers.js"
 import { editorContent } from "./content/editor-content.js"
 import { editorFrame } from "./frame/editor-frame.js"
+import { CodeVCNEditorHelper } from "./helpers/codevcn-editor-helper.js"
 import { editorToolbar } from "./toolbar/editor-toolbar.js"
-
-const CodeVCNEditorID: string = "codevcn-editor-root"
-
-enum ERenderingMode {
-  APPEND = "append",
-  REPLACE = "replace",
-}
+import { ERenderingMode } from "@/enums/global-enums.js"
 
 class CodeVCNEditor {
+  private editorWrapperID: string
   private editorWrapper: HTMLElement
 
-  constructor(editorWrapperId: string, renderingMode: ERenderingMode = ERenderingMode.APPEND) {
-    const editorWrapper = document.getElementById(editorWrapperId)
+  constructor(editorWrapperID: string, renderingMode: ERenderingMode = ERenderingMode.APPEND) {
+    const editorWrapper = document.getElementById(editorWrapperID)
     if (!editorWrapper) {
-      throw new Error(`Container with id ${editorWrapperId} not found`)
+      throw new Error(`Container with id ${editorWrapperID} not found`)
     }
 
     this.editorWrapper = editorWrapper
+    this.editorWrapperID = editorWrapperID
 
     editorFrame.getFrameElement().appendChild(editorToolbar.getToolbarElement())
     editorFrame.getFrameElement().appendChild(editorContent.getContentElement())
@@ -31,12 +27,16 @@ class CodeVCNEditor {
     }
   }
 
-  getContent(): string {
-    return editorContent.getContentElement().innerHTML
+  getEditorWrapperID(): string {
+    return this.editorWrapperID
   }
 
-  setContent(html: string): void {
-    editorContent.getContentElement().innerHTML = HTMLElementHelper.sanitizeHTML(html)
+  getEditorWrapper(): HTMLElement {
+    return this.editorWrapper
+  }
+
+  getContent(): string {
+    return editorContent.getContentElement().innerHTML
   }
 
   getToolbarElement(): HTMLElement {
@@ -50,6 +50,10 @@ class CodeVCNEditor {
   getFrameElement(): HTMLElement {
     return editorFrame.getFrameElement()
   }
+
+  setContent(html: string): void {
+    editorContent.getContentElement().innerHTML = CodeVCNEditorHelper.sanitizeHTML(html)
+  }
 }
 
-export const codevcnEditor = new CodeVCNEditor(CodeVCNEditorID)
+export const codevcnEditor = new CodeVCNEditor("codevcn-editor-root")

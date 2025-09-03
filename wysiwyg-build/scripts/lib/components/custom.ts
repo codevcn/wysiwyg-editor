@@ -5,19 +5,23 @@ import { ifDefined } from "lit-html/directives/if-defined.js"
 
 type TCustomDropDownProps = {
   label: string
-  options: { value: string; label: string }[]
+  options: {
+    value: string
+    label: string
+  }[]
 } & Partial<{
   dataObject: Record<string, string>
   classNames: Partial<{
     btn: string
-    option: string
+    options: string[]
+    container: string
   }>
 }>
 
 export const CustomDropDown = ({ label, options, dataObject, classNames }: TCustomDropDownProps): TemplateResult<1> => {
   return html`
     <div
-      class="NAME-custom-dropdown"
+      class="NAME-custom-dropdown ${classNames?.container || ""}"
       data-value="${options[0].value}"
       data-object=${ifDefined(dataObject ? JSON.stringify(dataObject) : null)}
     >
@@ -25,11 +29,11 @@ export const CustomDropDown = ({ label, options, dataObject, classNames }: TCust
       <div class="NAME-custom-dropdown-content">
         ${repeat(
           options,
-          (option) => option.value,
-          (option) =>
+          ({ value }) => value,
+          ({ value, label }, index) =>
             html`
-              <button class="NAME-custom-dropdown-option ${classNames?.option || ""}" data-value="${option.value}">
-                ${unsafeHTML(option.label)}
+              <button class="NAME-custom-dropdown-option ${classNames?.options?.[index] || ""}" data-value="${value}">
+                ${unsafeHTML(label)}
               </button>
             `
         )}
