@@ -62,15 +62,28 @@
 }
 .NAME-codevcn-editor .NAME-editor-content h1 {
   font-size: 2rem;
+  font-weight: 700;
 }
 .NAME-codevcn-editor .NAME-editor-content h2 {
   font-size: 1.5rem;
+  font-weight: 700;
 }
 .NAME-codevcn-editor .NAME-editor-content h3 {
   font-size: 1.25rem;
+  font-weight: 700;
 }
 .NAME-codevcn-editor .NAME-editor-content p {
   font-size: 1rem;
+}
+.NAME-codevcn-editor .NAME-editor-content blockquote {
+  border-left: 4px solid #ccc; /* đường kẻ bên trái */
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  background: #f9f9f9; /* nền xám nhạt */
+  color: #555; /* chữ xám */
+}
+.NAME-codevcn-editor .NAME-editor-content blockquote p {
+  display: block;
 }
 .NAME-codevcn-editor .NAME-custom-dropdown {
   position: relative;
