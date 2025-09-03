@@ -1,9 +1,9 @@
-import type { ETextStylingType } from "@/enums/global-enums"
+import type { ETextStylingType, ETextListingType } from "@/enums/global-enums"
 
-export type TToolbarButtonCommand = ETextStylingType
+export type TToolbarButtonCommand = ETextStylingType | ETextListingType
 
 export type TToolbarAction = {
-  command: ETextStylingType
+  command: ETextStylingType | ETextListingType
   label: string
   type: "button" | "select"
 } & Partial<{

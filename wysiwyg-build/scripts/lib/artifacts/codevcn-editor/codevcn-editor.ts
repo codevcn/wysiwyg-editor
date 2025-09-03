@@ -31,23 +31,23 @@ class CodeVCNEditor {
     }
   }
 
-  public getContent(): string {
+  getContent(): string {
     return editorContent.getContentElement().innerHTML
   }
 
-  public setContent(html: string): void {
+  setContent(html: string): void {
     editorContent.getContentElement().innerHTML = HTMLElementHelper.sanitizeHTML(html)
   }
 
-  public getToolbarElement(): HTMLElement {
+  getToolbarElement(): HTMLElement {
     return editorToolbar.getToolbarElement()
   }
 
-  public getContentElement(): HTMLElement {
+  getContentElement(): HTMLElement {
     return editorContent.getContentElement()
   }
 
-  public getFrameElement(): HTMLElement {
+  getFrameElement(): HTMLElement {
     return editorFrame.getFrameElement()
   }
 }

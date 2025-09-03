@@ -14,7 +14,7 @@ class EditorFrame {
     return HTMLElementHelper.createFromRenderer(Renderer)
   }
 
-  public getFrameElement(): HTMLElement {
+  getFrameElement(): HTMLElement {
     return this.frameEl
   }
 }

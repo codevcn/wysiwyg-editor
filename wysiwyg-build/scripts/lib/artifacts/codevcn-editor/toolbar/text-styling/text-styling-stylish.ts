@@ -1,7 +1,6 @@
-import { editorContent } from "../../content/editor-content"
 import { ETextStylingType } from "@/enums/global-enums"
-
-let count = 0
+import { DOMHelpers } from "../../helpers/DOMHelpers"
+import { editorContent } from "../../content/editor-content"
 
 class TextStylingStylish {
   private currentStylingType: ETextStylingType | null = null
@@ -16,8 +15,14 @@ class TextStylingStylish {
     [ETextStylingType.STRIKE_THROUGH]: ["S", "DEL", "STRIKE"],
   }
 
+  constructor() {}
+
+  private getAllAvailableTagNames(): string[] {
+    return Object.values(this.tagNamesForStyling).flat()
+  }
+
   private ifTagNameIsCurrentStyling(tagName: string): boolean {
-    return this.tagNamesForStyling[this.currentStylingType!].includes(tagName)
+    return this.getCurrentStylingTagNames().includes(tagName)
   }
 
   private setCurrentStylingType(stylingType: ETextStylingType): void {
@@ -40,15 +45,11 @@ class TextStylingStylish {
       selectionRange.startContainer.nodeType === Node.TEXT_NODE
         ? (selectionRange.startContainer.parentNode as HTMLElement)
         : (selectionRange.startContainer as HTMLElement)
-    const editorContentElement = editorContent.getContentElement()
-    while (node && editorContentElement.contains(node)) {
-      if (this.ifTagNameIsCurrentStyling(node.tagName) && node.contains(selectionRange.endContainer)) {
-        this.parentStylingElement = node
-        return
-      }
-      node = node.parentNode as HTMLElement
-    }
-    this.parentStylingElement = null
+    if (!node) return
+    this.parentStylingElement = DOMHelpers.getClosestElementOfNode(
+      node,
+      (node) => this.ifTagNameIsCurrentStyling(node.tagName) && node.contains(selectionRange.endContainer)
+    )
   }
 
   /**
@@ -123,17 +124,26 @@ class TextStylingStylish {
     parentStylingElement.replaceWith(replacement)
   }
 
-  private findDescendantsSameTag(parent: HTMLElement): HTMLElement[] {
-    const tagName = parent.tagName
-    return Array.from(parent.querySelectorAll(tagName))
-  }
-
   private warpContentByStylingTag(selectionRange: Range): HTMLElement {
     const content = selectionRange.extractContents()
     const element = document.createElement(this.getCurrentStylingTagName())
     element.appendChild(content)
     selectionRange.insertNode(element)
     return element
+  }
+
+  private findDescendantsSameTag(parent: HTMLElement): HTMLElement[] {
+    const tagName = parent.tagName
+    // liệt kê tất cả các tagName cùng loại với tagName của parent
+    const descendantTagNames: string[] = []
+    for (const stylingType in this.tagNamesForStyling) {
+      const tagNames = this.tagNamesForStyling[stylingType as ETextStylingType]
+      if (tagNames.includes(tagName)) {
+        descendantTagNames.push(...tagNames)
+      }
+    }
+    // tìm tất cả các phần tử có tagName cùng loại với tagName của parent
+    return Array.from(parent.querySelectorAll(descendantTagNames.join(",")))
   }
 
   private removeOverlapChildTags(parentStylingElement: HTMLElement): void {
@@ -145,10 +155,10 @@ class TextStylingStylish {
 
   /**
    * Kiểm tra xem phần tử parent có text node nào không nằm trong tagNameAllowed hay không
-   * @param {HTMLElement} parent - Phần tử gốc
-   * @param {string[]} tagNamesAllowed - danh sách tagName được phép chứa text
+   * @param {HTMLElement} parent - Phần tử parent
    */
-  private makeStylingToTextNodeOutsideTags(parent: HTMLElement, tagNamesAllowed: string[]): void {
+  private makeStylingToTextNodeOutsideTags(parent: HTMLElement): void {
+    const tagNamesAllowed = this.getAllAvailableTagNames()
     const childNodes = parent.childNodes
     for (const node of childNodes) {
       if (node.nodeType === Node.TEXT_NODE) {
@@ -163,7 +173,7 @@ class TextStylingStylish {
         const el = node as HTMLElement
         // nếu không phải tag được phép thì kiểm tra tiếp đệ quy
         if (!tagNamesAllowed.includes(el.tagName)) {
-          this.makeStylingToTextNodeOutsideTags(el, tagNamesAllowed)
+          this.makeStylingToTextNodeOutsideTags(el)
         } else {
           // nếu nằm trong tag được phép, bỏ qua đệ quy
           continue
@@ -172,37 +182,42 @@ class TextStylingStylish {
     }
   }
 
-  public makeStyling(selection: Selection, stylingType: ETextStylingType): void {
-    if (!selection || selection.rangeCount === 0) return
-    const range = selection.getRangeAt(0)
-    if (range.collapsed) return
+  private removeEmptyTags(parent: HTMLElement): void {
+    const elements = parent.children
+    for (const element of elements) {
+      if (element.innerHTML === "") {
+        element.remove()
+        continue
+      } else if (element.hasChildNodes()) {
+        this.removeEmptyTags(element as HTMLElement)
+      }
+    }
+  }
 
-    console.log(">>> vcn-id:", document.querySelector(".vcn-id"))
-    count++
-
+  private makeStyling(selectionRange: Range, stylingType: ETextStylingType): void {
     this.setCurrentStylingType(stylingType)
-    this.setParentStylingElement(range)
-    console.log(">>> 151:", this.parentStylingElement)
+    this.setParentStylingElement(selectionRange)
 
-    // if (count !== 1) {
-    //   return
-    // }
     if (this.parentStylingElement) {
       // check xem selection có nằm hoàn toàn trong 1 styling tag không
-      console.log(">>> run this 189")
-      this.unstylingFromSelection(range)
-    }
-    // nếu không nằm hoàn toàn trong styling tag thì bọc content bởi styling tag và xóa các tag giống styling tag
-    else {
-      console.log(">>> run this 170")
-      const parentStylingElement = this.warpContentByStylingTag(range)
+      this.unstylingFromSelection(selectionRange)
+    } else {
+      // nếu không nằm hoàn toàn trong styling tag thì bọc content bởi styling tag và xóa các tag giống styling tag
+      const parentStylingElement = this.warpContentByStylingTag(selectionRange)
       this.removeOverlapChildTags(parentStylingElement)
-      this.makeStylingToTextNodeOutsideTags(parentStylingElement, this.getCurrentStylingTagNames())
     }
 
     if (this.parentStylingElement) {
       this.mergeAdjacentStyling(this.parentStylingElement)
     }
+  }
+
+  onAction(stylingType: ETextStylingType): void {
+    const selection = editorContent.checkIsFocusingInEditorContent()
+    if (!selection || selection.rangeCount === 0) return
+    const range = selection.getRangeAt(0)
+    if (range.collapsed) return
+    this.makeStyling(range, stylingType)
   }
 }
 

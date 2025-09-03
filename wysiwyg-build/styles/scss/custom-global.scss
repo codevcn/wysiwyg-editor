@@ -65,3 +65,37 @@ body {
     }
   }
 }
+
+.NAME-editor-content {
+  ol,
+  ul {
+    padding-left: 0;
+  }
+
+  li {
+    position: relative;
+    padding-left: 25px;
+
+    &::before {
+      position: absolute;
+      left: 0;
+      top: 0;
+    }
+  }
+
+  ol {
+    list-style: none;
+
+    li {
+      counter-increment: item;
+
+      &::before {
+        content: counter(item) ".";
+      }
+    }
+  }
+
+  ul {
+    list-style-type: disc;
+  }
+}

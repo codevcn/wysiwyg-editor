@@ -1,4 +1,3 @@
-import { ETextStylingType } from "@/enums/global-enums"
 import type { TToolbarButtonCommand } from "@/types/global-types"
 
 type TButtonClickCallback = (command: TToolbarButtonCommand, value?: string) => void
