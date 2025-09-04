@@ -1,11 +1,11 @@
 import { EToolbarAction, EBlockquoteType } from "@/enums/global-enums.js"
-import { TToolbarAction } from "@/types/global-types.js"
+import type { TToolbarAction } from "@/types/global-types.js"
 import { html } from "lit-html"
 import { repeat } from "lit-html/directives/repeat.js"
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
-import { ToolbarButton } from "../toolbar-button.js"
-import { blockquoteStylish } from "./blockquote-stylish.js"
-import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper.js"
+import { ToolbarButton } from "../../toolbar-button.js"
+import { blockquoteStylish } from "./blockquote.stylish.js"
+import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 
 class BlockquoteModule {
   private sectionElement: HTMLElement
@@ -18,11 +18,11 @@ class BlockquoteModule {
   ]
 
   constructor() {
-    this.sectionElement = this.initSectionElement()
+    this.sectionElement = this.createSectionElement()
     this.bindEvents()
   }
 
-  private initSectionElement(): HTMLElement {
+  private createSectionElement(): HTMLElement {
     const Renderer = () =>
       html`<div class="NAME-blockquote-module flex gap-2">
         ${repeat(
@@ -37,7 +37,7 @@ class BlockquoteModule {
             </button>`
         )}
       </div>`
-    return CodeVCNEditorHelper.createFromRenderer(Renderer)
+    return LitHTMLHelper.createFromRenderer(Renderer, [])
   }
 
   getSectionElement(): HTMLElement {

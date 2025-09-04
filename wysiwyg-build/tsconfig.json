@@ -3,7 +3,6 @@
     "target": "es6",
     "module": "es6",
     "rootDir": "./scripts",
-    "outDir": "../wysiwyg/public/scripts",
     "strict": true,
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
@@ -12,7 +11,9 @@
     "noImplicitAny": true,
     "paths": {
       "@/*": ["./scripts/*"]
-    }
+    },
+    "inlineSources": true,
+    "sourceMap": true
   },
   "include": ["scripts/**/*"],
   "exclude": ["styles/**/*", "node_modules/**/*"]

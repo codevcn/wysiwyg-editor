@@ -20,7 +20,11 @@ export enum ERenderingMode {
 }
 
 export enum EBlockquoteType {
-  BLOCKQUOTE = "blockquote-stylish",
+  BLOCKQUOTE = "text-blocking-blockquote",
+}
+
+export enum EImageBlockingType {
+  IMAGE_BLOCKING = "image-blocking",
 }
 
 export enum EToolbarAction {
@@ -31,7 +35,8 @@ export enum EToolbarAction {
   RESIZE = "text-styling-resize",
   NUMBERED_LIST = "text-listing-numbered-list",
   BULLET_LIST = "text-listing-bullet-list",
-  BLOCKQUOTE = "blockquote-stylish",
+  BLOCKQUOTE = "text-blocking-blockquote",
+  IMAGE_BLOCKING = "image-blocking",
 }
 
 export enum EErrorMessage {

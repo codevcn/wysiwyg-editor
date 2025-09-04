@@ -1,6 +1,6 @@
 import { ETextStylingType } from "@/enums/global-enums.js"
-import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper.js"
-import { editorContent } from "../../content/editor-content.js"
+import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
 class TextStylingStylish {
   private currentStylingType: ETextStylingType | null = null

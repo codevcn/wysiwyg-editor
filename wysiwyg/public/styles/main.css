@@ -1,4 +1,9 @@
 @charset "UTF-8";
+:root {
+  --vcn-border-gray-cl: #d5d5d5;
+  --vcn-hover-gray-cl: #4a556520;
+}
+
 .NAME-codevcn-editor {
   font-size: 1rem;
 }
@@ -120,4 +125,39 @@
 }
 .NAME-codevcn-editor .NAME-custom-dropdown[data-open=true] .NAME-custom-dropdown-content {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.NAME-add-image-container .NAME-add-image-type-buttons.STATE-upload .NAME-add-image-btn-upload {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.NAME-add-image-container .NAME-add-image-type-buttons.STATE-url .NAME-add-image-btn-url {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+.NAME-add-image-container .NAME-add-image-content.STATE-url .NAME-add-image-upload-section {
+  display: none;
+}
+.NAME-add-image-container .NAME-add-image-content.STATE-url .NAME-add-image-url-section {
+  display: block;
+}
+.NAME-add-image-container .NAME-add-image-content.STATE-upload .NAME-add-image-upload-section {
+  display: block;
+}
+.NAME-add-image-container .NAME-add-image-content.STATE-upload .NAME-add-image-url-section {
+  display: none;
+}
+
+.NAME-modal {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none;
+}
+.NAME-modal.STATE-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+[hidden] {
+  display: none;
 }

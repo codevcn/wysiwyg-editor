@@ -18,7 +18,7 @@ type TCustomDropDownProps = {
   }>
 }>
 
-export const CustomDropDown = ({ label, options, dataObject, classNames }: TCustomDropDownProps): TemplateResult<1> => {
+export const DropDown = ({ label, options, dataObject, classNames }: TCustomDropDownProps): TemplateResult<1> => {
   return html`
     <div
       class="NAME-custom-dropdown ${classNames?.container || ""}"

@@ -4,8 +4,8 @@ import { ETextListingType, EToolbarAction } from "@/enums/global-enums.js"
 import { repeat } from "lit-html/directives/repeat.js"
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
 import { ToolbarButton } from "../toolbar-button.js"
-import { textListingStylish } from "./text-listing-stylish.js"
-import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper"
+import { textListingStylish } from "./text-listing.stylish.js"
+import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 
 class TextListingModule {
   private sectionElement: HTMLElement
@@ -25,11 +25,11 @@ class TextListingModule {
   ]
 
   constructor() {
-    this.sectionElement = this.initSectionElement()
+    this.sectionElement = this.createSectionElement()
     this.bindEvents()
   }
 
-  private initSectionElement(): HTMLElement {
+  private createSectionElement(): HTMLElement {
     const Renderer = () => html`<div class="NAME-text-listing-section flex gap-2">
       ${repeat(
         this.actions,
@@ -43,7 +43,7 @@ class TextListingModule {
           </button>`
       )}
     </div>`
-    return CodeVCNEditorHelper.createFromRenderer(Renderer)
+    return LitHTMLHelper.createFromRenderer(Renderer, [])
   }
 
   getSectionElement(): HTMLElement {

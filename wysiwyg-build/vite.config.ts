@@ -4,6 +4,7 @@ import { defineConfig } from "vite"
 export default defineConfig({
   build: {
     outDir: "../wysiwyg/public/scripts", // thư mục đích
+    sourcemap: true,
     emptyOutDir: true, // xóa folder trước khi build
     target: "esnext",
     rollupOptions: {

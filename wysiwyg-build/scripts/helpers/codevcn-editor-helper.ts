@@ -1,5 +1,5 @@
 import { render, TemplateResult } from "lit-html"
-import { editorContent } from "../content/editor-content.js"
+import { editorContent } from "@/lib/artifact/content/editor.content.js"
 import DOMPurify from "dompurify"
 
 type TIsEmptyTopBlockResult = {
@@ -37,19 +37,6 @@ export class CodeVCNEditorHelper {
     const newBlock = document.createElement("section")
     newBlock.innerHTML = "<br>"
     return newBlock
-  }
-
-  static createFromRenderer<T extends (...args: any[]) => TemplateResult<1>>(
-    Renderer: T,
-    ...data: Parameters<T>[]
-  ): HTMLElement {
-    const container = document.createElement("div")
-    render(Renderer(...data), container)
-    return container.firstElementChild as HTMLElement
-  }
-
-  static sanitizeHTML(html: string): string {
-    return DOMPurify.sanitize(html)
   }
 
   static getClosestElementOfNode(startNode: HTMLElement, selector: (node: HTMLElement) => boolean): HTMLElement | null {
@@ -118,5 +105,9 @@ export class CodeVCNEditorHelper {
 
   static findLatestTopBlockElement(): HTMLElement | null {
     return editorContent.getContentElement().lastElementChild as HTMLElement | null
+  }
+
+  static insertNewTopBlockElement(): void {
+    editorContent.getContentElement().appendChild(this.createNewTopBlockElement())
   }
 }

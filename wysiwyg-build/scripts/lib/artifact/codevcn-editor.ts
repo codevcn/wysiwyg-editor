@@ -1,8 +1,9 @@
-import { editorContent } from "./content/editor-content.js"
-import { editorFrame } from "./frame/editor-frame.js"
-import { CodeVCNEditorHelper } from "./helpers/codevcn-editor-helper.js"
-import { editorToolbar } from "./toolbar/editor-toolbar.js"
+import { EditorErrorHelper } from "@/helpers/error-helper.js"
+import { editorContent } from "./content/editor.content.js"
+import { editorFrame } from "./frame/editor.frame.js"
+import { editorToolbar } from "./toolbar/editor.toolbar.js"
 import { ERenderingMode } from "@/enums/global-enums.js"
+import { sanitizeHTML } from "@/helpers/common-helpers.js"
 
 class CodeVCNEditor {
   private editorWrapperID: string
@@ -11,7 +12,7 @@ class CodeVCNEditor {
   constructor(editorWrapperID: string, renderingMode: ERenderingMode = ERenderingMode.APPEND) {
     const editorWrapper = document.getElementById(editorWrapperID)
     if (!editorWrapper) {
-      throw new Error(`Container with id ${editorWrapperID} not found`)
+      throw EditorErrorHelper.createError(`Container with id ${editorWrapperID} not found`)
     }
 
     this.editorWrapper = editorWrapper
@@ -27,16 +28,28 @@ class CodeVCNEditor {
     }
   }
 
+  /**
+   * Set the HTML content in the editor
+   * @param html - The HTML content to set in the editor
+   */
+  setContent(html: string): void {
+    editorContent.getContentElement().innerHTML = sanitizeHTML(html)
+  }
+
+  /**
+   * Get the HTML content from the editor
+   * @returns The HTML content from the editor
+   */
+  getContent(): string {
+    return editorContent.getContentElement().innerHTML
+  }
+
   getEditorWrapperID(): string {
     return this.editorWrapperID
   }
 
-  getEditorWrapper(): HTMLElement {
+  getEditorWrapperElement(): HTMLElement {
     return this.editorWrapper
-  }
-
-  getContent(): string {
-    return editorContent.getContentElement().innerHTML
   }
 
   getToolbarElement(): HTMLElement {
@@ -51,9 +64,7 @@ class CodeVCNEditor {
     return editorFrame.getFrameElement()
   }
 
-  setContent(html: string): void {
-    editorContent.getContentElement().innerHTML = CodeVCNEditorHelper.sanitizeHTML(html)
-  }
+  configModule() {}
 }
 
 export const codevcnEditor = new CodeVCNEditor("codevcn-editor-root")

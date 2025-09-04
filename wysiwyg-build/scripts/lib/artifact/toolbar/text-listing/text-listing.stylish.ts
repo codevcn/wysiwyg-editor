@@ -1,6 +1,6 @@
 import { ETextListingType } from "@/enums/global-enums"
-import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper"
-import { editorContent } from "../../content/editor-content"
+import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
 class TextListingStylish {
   private currentTagName: string = ""

@@ -1,14 +1,15 @@
 import { html } from "lit-html"
-import { textListingStylish } from "../toolbar/text-listing/text-listing-stylish.js"
-import { CodeVCNEditorHelper } from "../helpers/codevcn-editor-helper.js"
-import { blockquoteStylish } from "../toolbar/blockquote/blockquote-stylish.js"
+import { textListingStylish } from "../toolbar/text-listing/text-listing.stylish.js"
+import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { blockquoteStylish } from "../toolbar/text-blocking/blockquote/blockquote.stylish.js"
+import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 
 class EditorContent {
   private contentElement: HTMLElement
   private contentElementName: string = "NAME-editor-content"
 
   constructor() {
-    this.contentElement = this.initContentEl()
+    this.contentElement = this.createContentElement()
     this.initEventListeners()
   }
 
@@ -16,7 +17,7 @@ class EditorContent {
     return this.contentElementName
   }
 
-  private initContentEl(): HTMLElement {
+  private createContentElement(): HTMLElement {
     const Renderer = () =>
       html`
         <div
@@ -25,7 +26,7 @@ class EditorContent {
           spellcheck="false"
         ></div>
       `
-    return CodeVCNEditorHelper.createFromRenderer(Renderer)
+    return LitHTMLHelper.createFromRenderer(Renderer, [])
   }
 
   private bindKeydownEventListener(): void {
@@ -37,20 +38,14 @@ class EditorContent {
     })
   }
 
-  private insertNewTopBlockElement(): void {
-    const latestTopBlockElement = CodeVCNEditorHelper.findLatestTopBlockElement()
-    if (latestTopBlockElement) {
-      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(latestTopBlockElement)
-    } else {
-      this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
-    }
-  }
-
+  /**
+   * Hàm xử lý sự kiện beforeinput (hàm được gọi khi người dùng nhập chỉnh sửa content trong editor)
+   */
   private bindBeforeInputEventListener(): void {
     this.contentElement.addEventListener("beforeinput", (e) => {
       if (e.inputType === "insertParagraph") {
         e.preventDefault()
-        this.insertNewTopBlockElement()
+        this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
       }
     })
   }

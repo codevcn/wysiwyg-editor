@@ -2,12 +2,12 @@ import { html } from "lit-html"
 import { ToolbarButton } from "../toolbar-button.js"
 import { repeat } from "lit-html/directives/repeat.js"
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
-import { textStylingStylish } from "./text-styling-stylish.js"
+import { textStylingStylish } from "./text-styling.stylish.js"
 import { ETextStylingType, EToolbarAction } from "@/enums/global-enums.js"
 import type { TToolbarAction } from "@/types/global-types.js"
-import { CustomDropDown } from "@/lib/components/custom.js"
-import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper.js"
-import { UIComponentHelper } from "../../helpers/common-helpers.js"
+import { DropDown } from "@/lib/components/dropdown.js"
+import { DropdownManager } from "@/lib/components/managers/dropdown.manager.js"
+import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 
 class TextStylingModule {
   private sectionElement: HTMLElement
@@ -80,7 +80,7 @@ class TextStylingModule {
   ]
 
   constructor() {
-    this.sectionElement = this.initSectionElement()
+    this.sectionElement = this.createSectionElement()
     this.bindEvents()
   }
 
@@ -88,7 +88,7 @@ class TextStylingModule {
     return this.sectionElement
   }
 
-  private initSectionElement(): HTMLElement {
+  private createSectionElement(): HTMLElement {
     const Renderer = () =>
       html`<div class="NAME-text-styling-section flex gap-2">
         ${repeat(
@@ -96,7 +96,7 @@ class TextStylingModule {
           ({ action }) => action,
           ({ action, label, type, className, options }) =>
             type === "select"
-              ? CustomDropDown({
+              ? DropDown({
                   label,
                   options: options || [],
                   dataObject: {
@@ -117,7 +117,7 @@ class TextStylingModule {
                 </button>`
         )}
       </div>`
-    return CodeVCNEditorHelper.createFromRenderer(Renderer)
+    return LitHTMLHelper.createFromRenderer(Renderer, [])
   }
 
   private bindButtonEvents() {
@@ -133,7 +133,7 @@ class TextStylingModule {
   private bindDropdownEvents() {
     const dropdowns = this.sectionElement.querySelectorAll<HTMLElement>(".NAME-custom-dropdown")
     for (const dropdown of dropdowns) {
-      UIComponentHelper.bindDropdownEvent(
+      DropdownManager.bindDropdownClickEvent(
         dropdown,
         "NAME-custom-dropdown",
         "NAME-custom-dropdown-btn",

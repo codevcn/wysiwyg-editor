@@ -1,7 +1,7 @@
 import { EBlockquoteType, EErrorMessage } from "@/enums/global-enums.js"
-import { CodeVCNEditorHelper } from "../../helpers/codevcn-editor-helper.js"
-import { EditorErrorHelper } from "../../helpers/error-helper.js"
-import { editorContent } from "../../content/editor-content.js"
+import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { EditorErrorHelper } from "@/helpers/error-helper.js"
+import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
 class BlockquoteStylish {
   private blockQuoteTagName: string = "BLOCKQUOTE"
@@ -57,7 +57,14 @@ class BlockquoteStylish {
         this.blockQuoteTagName.toLowerCase()
       ) as HTMLElement
       if (blockquoteElementFirstChild) {
-        topBlockElement.replaceWith(...blockquoteElementFirstChild.childNodes)
+        const childNodes = blockquoteElementFirstChild.childNodes
+        const newTopBlocks: HTMLElement[] = []
+        for (const childNode of childNodes) {
+          const topBlock = document.createElement(CodeVCNEditorHelper.topBlockElementTagName)
+          topBlock.appendChild(childNode.cloneNode(true))
+          newTopBlocks.push(topBlock)
+        }
+        topBlockElement.replaceWith(...newTopBlocks)
       }
     }
     this.currentBlockquoteElement = null
@@ -126,17 +133,15 @@ class BlockquoteStylish {
 
   private makeBlockquoteOnKeyboardEvent(e: KeyboardEvent): void {
     if (e.key === "Enter") {
-      e.preventDefault()
       const selection = window.getSelection()
       if (!selection || selection.rangeCount === 0) return
       const isInBlockquote = this.checkIfIsInBlockquote(selection)
       if (!isInBlockquote) return
+      e.preventDefault()
       // chỉ dc thực thi nếu caret nằm trong blockquote
       if (this.isOnEmptyLine(selection)) {
-        console.log(">>> run this 120")
         this.exitBlockquote()
       } else {
-        console.log(">>> run this 123")
         this.insertNewEmptyLine(selection)
       }
     }
