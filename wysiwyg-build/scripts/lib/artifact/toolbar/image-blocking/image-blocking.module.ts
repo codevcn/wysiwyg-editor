@@ -1,11 +1,12 @@
 import { EImageBlockingType, EToolbarAction } from "@/enums/global-enums.js"
-import type { TToolbarAction } from "@/types/global-types.js"
+import type { TImageBlockingModuleConfig, TToolbarAction } from "@/types/global-types.js"
 import { ToolbarButton } from "../toolbar-button.js"
 import { html } from "lit-html"
 import { repeat } from "lit-html/directives/repeat.js"
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { addImageModalManager } from "./add-image.manager.js"
+import { editorContent } from "../../content/editor.content.js"
 
 export class ImageBlockingModule {
   private sectionElement: HTMLElement
@@ -56,6 +57,11 @@ export class ImageBlockingModule {
 
   private bindEvents() {
     this.bindButtonEvents()
+  }
+
+  configModule(config: TImageBlockingModuleConfig) {
+    const { uploadImageURL } = config
+    addImageModalManager.setUploadImageURL(uploadImageURL)
   }
 
   onAction(action: EImageBlockingType) {

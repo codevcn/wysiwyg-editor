@@ -1,20 +1,43 @@
+import { EErrorMessage, ENotifyType } from "@/enums/global-enums"
+import { getImageDimensions, isValidUrl } from "@/helpers/common-helpers"
+import { EditorInternalErrorHelper } from "@/helpers/error-helper"
 import { ModalManager } from "@/lib/components/managers/modal.manager"
 import { Modal } from "@/lib/components/modal"
+import { CodeVCNEditorService } from "@/services/codevcn-editor.service"
 import { html } from "lit-html"
+import { imageBlockingStylish } from "./image-blocking.stylish"
+import { TImageDimensions } from "@/types/global-types"
 
 class AddImageModalManager {
   private addImageModal: HTMLElement
+  private uploadImageURL: string
+  private maxImageSizeAllowed: number
+  private maxImagesCountAllowed: number
 
   constructor() {
     this.addImageModal = this.createAddImageModal()
+    this.uploadImageURL = ""
+    this.maxImageSizeAllowed = 10 * 1024 * 1024 // 10MB
+    this.maxImagesCountAllowed = 5
   }
 
-  private createAddImageModal(): HTMLElement {
-    return ModalManager.initModal()
+  setUploadImageURL(url: string) {
+    if (!isValidUrl(url)) {
+      throw EditorInternalErrorHelper.createError(EErrorMessage.INVALID_UPLOAD_IMAGE_URL)
+    }
+    this.uploadImageURL = url
   }
 
   getAddImageModal(): HTMLElement {
     return this.addImageModal
+  }
+
+  getUploadImageURL(): string {
+    return this.uploadImageURL
+  }
+
+  private createAddImageModal(): HTMLElement {
+    return ModalManager.initModal()
   }
 
   private switchAddImageType(e: PointerEvent) {
@@ -41,18 +64,94 @@ class AddImageModalManager {
     input.click()
   }
 
-  private previewImage(image: HTMLImageElement) {
-    const preview = this.addImageModal.querySelector(".NAME-add-image-preview") as HTMLElement
-    preview.appendChild(image)
+  private notify(type: ENotifyType, message: string) {
+    console.error(">>> notify:", { message, type })
   }
 
-  private onPickImageFile(e: PointerEvent) {
+  private validateImageFile(file: File): boolean {
+    if (file.size > this.maxImageSizeAllowed) {
+      this.notify(ENotifyType.ERROR, EErrorMessage.IMAGE_SIZE_TOO_LARGE)
+      return false
+    }
+    if (
+      file.type !== "image/svg+xml" &&
+      file.type !== "image/png" &&
+      file.type !== "image/jpg" &&
+      file.type !== "image/jpeg" &&
+      file.type !== "image/gif"
+    ) {
+      this.notify(ENotifyType.ERROR, EErrorMessage.INVALID_IMAGE_TYPE)
+      return false
+    }
+    return true
+  }
+
+  private validateImageFiles(files: File[]): boolean {
+    if (files.length > this.maxImagesCountAllowed) {
+      this.notify(ENotifyType.ERROR, EErrorMessage.MAX_IMAGES_COUNT_TOO_LARGE)
+      return false
+    }
+    for (const file of files) {
+      if (!this.validateImageFile(file)) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private previewImage(imgName: string, url: string) {
+    const preview = this.addImageModal.querySelector(".NAME-add-image-preview") as HTMLElement
+    const image = new Image()
+    image.src = url
+    image.alt = imgName
+    image.className = "w-full h-full object-contain"
+    image.onload = () => {
+      preview.innerHTML = ""
+      preview.appendChild(image)
+    }
+    const imgUrlInput = this.addImageModal.querySelector(".NAME-add-image-img-url") as HTMLInputElement
+    imgUrlInput.value = url
+  }
+
+  private async fillImageDimensions(imgDimensions: TImageDimensions) {
+    const { width, height } = imgDimensions
+    const widthInput = this.addImageModal.querySelector(".NAME-add-image-width-input") as HTMLInputElement
+    const heightInput = this.addImageModal.querySelector(".NAME-add-image-height-input") as HTMLInputElement
+    widthInput.value = `${width}`
+    heightInput.value = `${height}`
+  }
+
+  private async onPickImageFile(e: PointerEvent) {
     e.preventDefault()
     e.stopPropagation()
     const input = e.currentTarget as HTMLInputElement
-    const files = input.files
-    if (files && files.length > 0) {
+    const filesList = input.files
+    if (filesList && filesList.length > 0) {
+      const files = Array.from(filesList)
+      if (!this.validateImageFiles(files)) return
+      const result = await CodeVCNEditorService.uploadImage(this.uploadImageURL, files, (progress) => {
+        console.log(">>> progress:", progress)
+      })
+      this.previewImage(files[0].name, result.files[0].url)
+      const dimensions = await getImageDimensions(files[0])
+      console.log(">>> dimensions:", dimensions)
+      this.fillImageDimensions(dimensions)
     }
+    input.value = ""
+    input.files = null
+    input.src = ""
+  }
+
+  private onAction(e: PointerEvent) {
+    e.preventDefault()
+    e.stopPropagation()
+    const infoForm = this.addImageModal.querySelector(".NAME-add-image-info-form") as HTMLFormElement
+    const formData = new FormData(infoForm)
+    const width = parseInt(formData.get("img-width") as string)
+    const height = parseInt(formData.get("img-height") as string)
+    const imgUrl = formData.get("img-url") as string
+    const caption = formData.get("img-caption") as string
+    imageBlockingStylish.onAction({ width, height, altText: caption, imgUrl })
   }
 
   showAddImageModal() {
@@ -118,23 +217,29 @@ class AddImageModalManager {
             </div>
 
             <div class="space-y-2">
-              <label class="block text-sm pl-1 font-medium text-black">Preview</label>
-              <div class="border border-gray-300 rounded-xl p-8 bg-gray-50">
-                <div class="flex flex-col items-center justify-center h-48 text-gray-500">
+              <label class="block text-sm pl-1 font-medium text-black">Image Preview</label>
+              <div class="border border-gray-300 rounded-lg p-2 bg-gray-100">
+                <div class="NAME-add-image-preview flex flex-col items-center justify-center text-gray-500">
                   <i class="bi bi-image text-4xl mb-4 font-bold"></i>
                   <p class="text-sm">No image selected</p>
                 </div>
               </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4">
+            <form
+              action="#"
+              @submit=${(e: SubmitEvent) => e.preventDefault()}
+              class="NAME-add-image-info-form grid grid-cols-1 md:grid-cols-2 gap-6 pb-4"
+            >
+              <input hidden name="img-url" class="NAME-add-image-img-url" />
               <div class="space-y-4 grid-rows-2 flex flex-col justify-between">
                 <div class="space-y-2">
                   <label class="block text-sm pl-1 font-medium text-black">Width (px)</label>
                   <input
                     type="number"
                     placeholder="800"
-                    class="w-full px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+                    name="img-width"
+                    class="NAME-add-image-width-input w-full px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
                   />
                 </div>
                 <div class="space-y-2">
@@ -142,7 +247,8 @@ class AddImageModalManager {
                   <input
                     type="number"
                     placeholder="600"
-                    class="w-full px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+                    name="img-height"
+                    class="NAME-add-image-height-input w-full px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
                   />
                 </div>
               </div>
@@ -150,12 +256,13 @@ class AddImageModalManager {
               <div class="space-y-2 grid-rows-2 flex flex-col">
                 <label class="block text-sm pl-1 font-medium text-black">Description</label>
                 <textarea
-                  placeholder="Describe the image for accessibility..."
+                  placeholder="Enter image caption..."
                   rows="5"
+                  name="img-caption"
                   class="w-full grow px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200 resize-none"
                 ></textarea>
               </div>
-            </div>
+            </form>
           </div>
         `,
         footerLitHTML: html`
@@ -167,9 +274,10 @@ class AddImageModalManager {
               Cancel
             </button>
             <button
+              @click=${(e: PointerEvent) => this.onAction(e)}
               class="px-6 py-1 cursor-pointer bg-black text-white rounded-lg hover:scale-105 transition duration-200 font-medium shadow-lg hover:shadow-xl"
             >
-              Upload Image
+              Insert Image
             </button>
           </div>
         `,

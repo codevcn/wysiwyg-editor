@@ -90,6 +90,9 @@
 .NAME-codevcn-editor .NAME-editor-content blockquote p {
   display: block;
 }
+.NAME-codevcn-editor .NAME-editor-content img {
+  display: inline-block;
+}
 .NAME-codevcn-editor .NAME-custom-dropdown {
   position: relative;
 }

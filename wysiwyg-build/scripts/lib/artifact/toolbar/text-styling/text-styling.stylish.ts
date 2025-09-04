@@ -221,7 +221,7 @@ class TextStylingStylish {
 
   onAction(stylingType: ETextStylingType): void {
     const selection = editorContent.checkIsFocusingInEditorContent()
-    if (!selection || selection.rangeCount === 0) return
+    if (!selection) return
     const range = selection.getRangeAt(0)
     if (range.collapsed) return
     this.makeStyling(range, stylingType)

@@ -41,4 +41,17 @@ export enum EToolbarAction {
 
 export enum EErrorMessage {
   QUOTE_LINE_ELEMENT_NOT_FOUND = "Quote line element not found",
+  INVALID_UPLOAD_IMAGE_URL = "Invalid upload image URL",
+  IMAGE_SIZE_TOO_LARGE = "Image size too large",
+  INVALID_IMAGE_TYPE = "Invalid image type",
+  MAX_IMAGES_COUNT_TOO_LARGE = "Max images count too large",
+  FILE_IS_NOT_IMAGE = "File is not image",
+  SELECTION_NOT_FOUND = "Selection not found in editor content",
+}
+
+export enum ENotifyType {
+  SUCCESS = "success",
+  ERROR = "error",
+  WARNING = "warning",
+  INFO = "info",
 }

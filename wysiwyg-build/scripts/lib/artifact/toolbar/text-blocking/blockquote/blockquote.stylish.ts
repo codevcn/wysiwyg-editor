@@ -1,6 +1,6 @@
 import { EBlockquoteType, EErrorMessage } from "@/enums/global-enums.js"
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
-import { EditorErrorHelper } from "@/helpers/error-helper.js"
+import { EditorInternalErrorHelper } from "@/helpers/error-helper.js"
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
 class BlockquoteStylish {
@@ -71,7 +71,7 @@ class BlockquoteStylish {
   }
 
   private makeBlockquoteOnButtonClick(): void {
-    const selection = window.getSelection()
+    const selection = editorContent.checkIsFocusingInEditorContent()
     if (!selection) return
     // bắt buộc phải check bằng selection hiện tại khi tạo blockquote bằng click on button, vì
     // khi tạo blockquote mới thì chưa biết caret có nằm trong blockquote hay không
@@ -117,7 +117,7 @@ class BlockquoteStylish {
   private isOnEmptyLine(selection: Selection): boolean {
     const quoteLineElement = this.getClosestQuoteLineElement(selection)
     if (!quoteLineElement) {
-      throw EditorErrorHelper.createError(EErrorMessage.QUOTE_LINE_ELEMENT_NOT_FOUND)
+      throw EditorInternalErrorHelper.createError(EErrorMessage.QUOTE_LINE_ELEMENT_NOT_FOUND)
     }
     const trimmedInnerHTML = quoteLineElement.innerHTML.trim()
     return trimmedInnerHTML === "<br>" || trimmedInnerHTML === ""
@@ -133,8 +133,8 @@ class BlockquoteStylish {
 
   private makeBlockquoteOnKeyboardEvent(e: KeyboardEvent): void {
     if (e.key === "Enter") {
-      const selection = window.getSelection()
-      if (!selection || selection.rangeCount === 0) return
+      const selection = editorContent.checkIsFocusingInEditorContent()
+      if (!selection) return
       const isInBlockquote = this.checkIfIsInBlockquote(selection)
       if (!isInBlockquote) return
       e.preventDefault()

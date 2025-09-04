@@ -1,6 +1,7 @@
 import { render, TemplateResult } from "lit-html"
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
 import DOMPurify from "dompurify"
+import { ENotifyType } from "@/enums/global-enums"
 
 type TIsEmptyTopBlockResult = {
   topBlockElement: HTMLElement | null
@@ -52,13 +53,13 @@ export class CodeVCNEditorHelper {
   }
 
   static getTopBlockElementFromNode(startNode: HTMLElement): HTMLElement | null {
-    let currentElement: HTMLElement = startNode
+    let currentElement: HTMLElement | null = startNode
     let topBlockElement: HTMLElement | null = null
     const editorContentElement = editorContent.getContentElement()
     const editorContentElementName = editorContent.getContentElementName()
     while (currentElement && editorContentElement.contains(currentElement)) {
-      currentElement = currentElement.closest(this.topBlockElementTagName) as HTMLElement
-      if (currentElement.parentElement?.classList.contains(editorContentElementName)) {
+      currentElement = currentElement.closest<HTMLElement>(this.topBlockElementTagName)
+      if (currentElement && currentElement.parentElement?.classList.contains(editorContentElementName)) {
         topBlockElement = currentElement
         break
       }
@@ -81,14 +82,20 @@ export class CodeVCNEditorHelper {
    * Tạo 1 block mới và đặt caret vào block mới
    * @returns Block mới đã được chèn
    */
-  static insertNewTopBlockElementAfterElement(element: HTMLElement): HTMLElement | null {
-    const selection = window.getSelection()
+  static insertNewTopBlockElementAfterElement(element?: HTMLElement): HTMLElement | null {
+    const selection = editorContent.checkIsFocusingInEditorContent()
     if (!selection) return null
 
-    const newBlockElement = this.createNewTopBlockElement()
+    let newBlockElement: HTMLElement
 
-    // Insert vào sau 1 element
-    element.insertAdjacentElement("afterend", newBlockElement)
+    if (element) {
+      // Insert vào sau 1 element
+      const topBlockElement = this.getTopBlockElementFromNode(element)!
+      newBlockElement = this.createNewTopBlockElement()
+      topBlockElement.insertAdjacentElement("afterend", newBlockElement)
+    } else {
+      newBlockElement = this.insertNewTopBlockElement()
+    }
 
     // Đặt caret vào block mới
     this.moveCaretToStartOfElement(newBlockElement, selection, selection.getRangeAt(0))
@@ -103,11 +110,68 @@ export class CodeVCNEditorHelper {
     selection.addRange(selectionRange)
   }
 
+  static moveCaretToEndOfElement(element: HTMLElement, selection: Selection, selectionRange: Range): void {
+    selectionRange.selectNodeContents(element)
+    selectionRange.collapse(false)
+    selection.removeAllRanges()
+    selection.addRange(selectionRange)
+  }
+
   static findLatestTopBlockElement(): HTMLElement | null {
     return editorContent.getContentElement().lastElementChild as HTMLElement | null
   }
 
-  static insertNewTopBlockElement(): void {
-    editorContent.getContentElement().appendChild(this.createNewTopBlockElement())
+  static insertNewTopBlockElement(): HTMLElement {
+    const newBlockElement = this.createNewTopBlockElement()
+    editorContent.getContentElement().appendChild(newBlockElement)
+    return newBlockElement
+  }
+
+  static focusCaretAtEndOfEditorContent(): void {
+    const contentElement = editorContent.getContentElement()
+
+    const range = document.createRange()
+    const lastChild = contentElement.lastChild
+
+    if (lastChild) {
+      if (lastChild.nodeType === Node.TEXT_NODE) {
+        // caret ở cuối text node
+        range.setStart(lastChild, lastChild.textContent?.length || 0)
+      } else {
+        // caret ở cuối nội dung node element
+        range.selectNodeContents(lastChild)
+        range.collapse(false)
+      }
+    } else {
+      // nếu rỗng thì collapse trong content element
+      range.selectNodeContents(contentElement)
+      range.collapse(false)
+    }
+
+    const selection = window.getSelection()
+    if (!selection) return
+    contentElement.focus()
+    selection.removeAllRanges()
+    selection.addRange(range)
+  }
+
+  static notify(type: ENotifyType, message: string) {
+    const notificationElement = document.createElement("div")
+    notificationElement.className =
+      "fixed top-0 left-0 w-[250px] h-[100px] bg-white border border-gray-400 rounded-md flex items-center p-4 text-black"
+    if (type === ENotifyType.SUCCESS) {
+      notificationElement.classList.add("bg-green-300")
+    } else if (type === ENotifyType.ERROR) {
+      notificationElement.classList.add("bg-red-300")
+    } else if (type === ENotifyType.WARNING) {
+      notificationElement.classList.add("bg-yellow-300")
+    } else if (type === ENotifyType.INFO) {
+      notificationElement.classList.add("bg-blue-300")
+    }
+    notificationElement.innerHTML = message
+    document.body.appendChild(notificationElement)
+    setTimeout(() => {
+      notificationElement.remove()
+    }, 2000)
   }
 }

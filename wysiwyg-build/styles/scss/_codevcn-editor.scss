@@ -81,6 +81,10 @@
   blockquote {
     @include editor-content-blockquote-rules;
   }
+
+  img {
+    display: inline-block;
+  }
 }
 
 @mixin editor-content-dropdown-rules {

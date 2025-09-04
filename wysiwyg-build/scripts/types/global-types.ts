@@ -15,3 +15,16 @@ export type TToolbarAction = {
   }>)[]
   className: string
 }>
+
+export type TImageBlockingModuleConfig = {
+  uploadImageURL: string
+}
+
+export type TCodeVCNEditorConfig = Partial<{
+  imageModule: TImageBlockingModuleConfig
+}>
+
+export type TImageDimensions = {
+  width: number
+  height: number
+}

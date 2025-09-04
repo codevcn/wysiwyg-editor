@@ -94,7 +94,6 @@ class TextListingStylish {
     if (listLineElement) {
       if (this.isOnEmptyLine(listLineElement)) {
         this.deleteLine(listLineElement)
-        editorContent.insertNewTopBlockElementAndFocusCaret()
       } else {
         this.insertNewLine(listLineElement, selection)
       }
@@ -130,7 +129,7 @@ class TextListingStylish {
 
   private makeListingOnToolbarButtonClick(listingType: ETextListingType): void {
     const selection = editorContent.checkIsFocusingInEditorContent()
-    if (!selection || selection.rangeCount === 0) return
+    if (!selection) return
     this.setCurrentTagName(listingType)
     this.makeListing(selection)
   }
@@ -139,12 +138,12 @@ class TextListingStylish {
     if (e.key === "Enter") {
       e.preventDefault()
       const selection = editorContent.checkIsFocusingInEditorContent()
-      if (!selection || selection.rangeCount === 0) return
+      if (!selection) return
       this.makeListing(selection)
     } else if (e.key === "Tab") {
       e.preventDefault()
       const selection = editorContent.checkIsFocusingInEditorContent()
-      if (!selection || selection.rangeCount === 0) return
+      if (!selection) return
       this.makeNestedListing(selection)
     }
   }

@@ -3,6 +3,7 @@ import { textListingStylish } from "../toolbar/text-listing/text-listing.stylish
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
 import { blockquoteStylish } from "../toolbar/text-blocking/blockquote/blockquote.stylish.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
+import { ENotifyType } from "@/enums/global-enums.js"
 
 class EditorContent {
   private contentElement: HTMLElement
@@ -38,6 +39,17 @@ class EditorContent {
     })
   }
 
+  private makeNewLine(): void {
+    const selection = this.checkIsFocusingInEditorContent()
+    if (!selection) return
+    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
+    if (topBlockElement) {
+      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(topBlockElement)
+    } else {
+      this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
+    }
+  }
+
   /**
    * Hàm xử lý sự kiện beforeinput (hàm được gọi khi người dùng nhập chỉnh sửa content trong editor)
    */
@@ -45,7 +57,7 @@ class EditorContent {
     this.contentElement.addEventListener("beforeinput", (e) => {
       if (e.inputType === "insertParagraph") {
         e.preventDefault()
-        this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
+        this.makeNewLine()
       }
     })
   }
@@ -61,31 +73,12 @@ class EditorContent {
 
   checkIsFocusingInEditorContent(): Selection | null {
     const selection = window.getSelection()
-    if (!selection) return null
-    const anchorNode = selection.anchorNode
+    if (!selection || selection.rangeCount === 0) return null
+    const { anchorNode, focusNode } = selection
     if (!anchorNode) return null
-    if (!this.contentElement.contains(anchorNode)) return null
+    if (!this.contentElement.contains(anchorNode) || !this.contentElement.contains(focusNode)) return null
+    if (this.contentElement.isSameNode(anchorNode) || this.contentElement.isSameNode(focusNode)) return null
     return selection
-  }
-
-  insertNewTopBlockElementAndFocusCaret(): HTMLElement {
-    const topBlockElement = document.createElement(CodeVCNEditorHelper.topBlockElementTagName)
-    topBlockElement.innerHTML = "<br>"
-    this.contentElement.appendChild(topBlockElement)
-
-    // Focus caret vào content của top block element mới tạo
-    const range = document.createRange()
-    range.selectNodeContents(topBlockElement)
-    range.collapse(true)
-    const selection = window.getSelection()
-    if (selection) {
-      selection.removeAllRanges()
-      selection.addRange(range)
-    }
-
-    this.contentElement.focus()
-
-    return topBlockElement
   }
 }
 
