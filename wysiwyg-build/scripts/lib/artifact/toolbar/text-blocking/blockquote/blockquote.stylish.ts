@@ -22,10 +22,10 @@ class BlockquoteStylish {
     this.currentBlockquoteElement = blockQuoteElement
   }
 
-  private exitBlockquote(): void {
+  private exitBlockquote(selection: Selection): void {
     const latestTopBlockElement = CodeVCNEditorHelper.findLatestTopBlockElement()
     if (latestTopBlockElement) {
-      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(latestTopBlockElement)
+      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, latestTopBlockElement)
     }
     this.currentBlockquoteElement = null
   }
@@ -42,12 +42,9 @@ class BlockquoteStylish {
     if (node?.tagName === this.blockQuoteTagName) {
       return node
     }
+    const blockquoteElement = node?.closest<HTMLElement>(this.blockQuoteTagName) || null
     const editorContentElement = editorContent.getContentElement()
-    while (node && node.tagName !== this.blockQuoteTagName && editorContentElement.contains(node)) {
-      node = node.closest(this.blockQuoteTagName) as HTMLElement
-    }
-    if (node?.tagName !== this.blockQuoteTagName) return null
-    return node
+    return editorContentElement.contains(blockquoteElement) ? blockquoteElement : null
   }
 
   private unblockquote(selection: Selection): void {
@@ -86,10 +83,8 @@ class BlockquoteStylish {
         this.insertNewBlockquoteElement(topBlockElement)
       } else {
         // nếu đang ở trong 1 block KHÔNG trống thì tạo blockquote cho block mới
-        const newBlockElement = CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(topBlockElement)
-        if (newBlockElement) {
-          this.insertNewBlockquoteElement(newBlockElement)
-        }
+        const newBlockElement = CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
+        this.insertNewBlockquoteElement(newBlockElement)
       }
     }
   }
@@ -140,7 +135,7 @@ class BlockquoteStylish {
       e.preventDefault()
       // chỉ dc thực thi nếu caret nằm trong blockquote
       if (this.isOnEmptyLine(selection)) {
-        this.exitBlockquote()
+        this.exitBlockquote(selection)
       } else {
         this.insertNewEmptyLine(selection)
       }

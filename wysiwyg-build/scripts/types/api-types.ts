@@ -5,3 +5,8 @@ export type TUploadImageRes = {
     url: string
   }[]
 }
+
+export type TImageInfoRes = {
+  width: number
+  height: number
+}

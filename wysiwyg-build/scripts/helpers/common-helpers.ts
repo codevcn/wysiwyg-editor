@@ -14,13 +14,13 @@ export const sanitizeHTML = (html: string): string => {
 }
 
 export class LitHTMLHelper {
-  static createFromRenderer<T extends (...args: any[]) => TemplateResult<1>>(
+  static createFromRenderer<T extends (...args: any[]) => TemplateResult<1>, R extends Element = HTMLElement>(
     Renderer: T,
     data: Parameters<T>
-  ): HTMLElement {
+  ): R {
     const container = document.createElement("div")
     render(Renderer(data), container)
-    return container.firstElementChild as HTMLElement
+    return container.firstElementChild as R
   }
 }
 
@@ -41,7 +41,7 @@ export function isValidUrl(str: string): boolean {
 export const getImageDimensions = (file: File): Promise<TImageDimensions> => {
   return new Promise((resolve, reject) => {
     if (!file.type.startsWith("image/")) {
-      reject(new Error(EErrorMessage.FILE_IS_NOT_IMAGE))
+      reject(new Error(EErrorMessage.ONLY_SUPPORT_IMAGE_FILE))
       return
     }
     const img = new Image()

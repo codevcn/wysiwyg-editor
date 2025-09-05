@@ -3,7 +3,7 @@ import { textListingStylish } from "../toolbar/text-listing/text-listing.stylish
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
 import { blockquoteStylish } from "../toolbar/text-blocking/blockquote/blockquote.stylish.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
-import { ENotifyType } from "@/enums/global-enums.js"
+import { addImageModalManager } from "../toolbar/image-blocking/add-image.manager.js"
 
 class EditorContent {
   private contentElement: HTMLElement
@@ -42,9 +42,13 @@ class EditorContent {
   private makeNewLine(): void {
     const selection = this.checkIsFocusingInEditorContent()
     if (!selection) return
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
+    const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
     if (topBlockElement) {
-      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(topBlockElement)
+      if (isEmpty) {
+        CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
+      } else {
+        CodeVCNEditorHelper.splitTopBlockElementAtCaret(topBlockElement, selection)
+      }
     } else {
       this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
     }
@@ -62,9 +66,18 @@ class EditorContent {
     })
   }
 
+  private bindPasteEventListener(): void {
+    this.contentElement.addEventListener("paste", (e) => {
+      queueMicrotask(() => {
+        addImageModalManager.onPasteImage(e)
+      })
+    })
+  }
+
   private initEventListeners(): void {
     this.bindKeydownEventListener()
     this.bindBeforeInputEventListener()
+    this.bindPasteEventListener()
   }
 
   getContentElement(): HTMLElement {

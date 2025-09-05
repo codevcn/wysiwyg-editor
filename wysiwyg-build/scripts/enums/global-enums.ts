@@ -45,8 +45,9 @@ export enum EErrorMessage {
   IMAGE_SIZE_TOO_LARGE = "Image size too large",
   INVALID_IMAGE_TYPE = "Invalid image type",
   MAX_IMAGES_COUNT_TOO_LARGE = "Max images count too large",
-  FILE_IS_NOT_IMAGE = "File is not image",
   SELECTION_NOT_FOUND = "Selection not found in editor content",
+  ONLY_SUPPORT_IMAGE_FILE = "Only support image file",
+  TOP_BLOCK_NOT_FOUND = "Top block element not found",
 }
 
 export enum ENotifyType {

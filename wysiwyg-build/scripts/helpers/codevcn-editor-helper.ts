@@ -1,6 +1,4 @@
-import { render, TemplateResult } from "lit-html"
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
-import DOMPurify from "dompurify"
 import { ENotifyType } from "@/enums/global-enums"
 
 type TIsEmptyTopBlockResult = {
@@ -37,6 +35,7 @@ export class CodeVCNEditorHelper {
   static createNewTopBlockElement(): HTMLElement {
     const newBlock = document.createElement("section")
     newBlock.innerHTML = "<br>"
+    newBlock.classList.add(crypto.randomUUID().slice(0, 8))
     return newBlock
   }
 
@@ -53,21 +52,17 @@ export class CodeVCNEditorHelper {
   }
 
   static getTopBlockElementFromNode(startNode: HTMLElement): HTMLElement | null {
-    let currentElement: HTMLElement | null = startNode
+    let currentElement: HTMLElement = startNode
+    if (currentElement.tagName === this.topBlockElementTagName) {
+      return currentElement
+    }
     let topBlockElement: HTMLElement | null = null
     const editorContentElement = editorContent.getContentElement()
-    const editorContentElementName = editorContent.getContentElementName()
-    while (currentElement && editorContentElement.contains(currentElement)) {
-      currentElement = currentElement.closest<HTMLElement>(this.topBlockElementTagName)
-      if (currentElement && currentElement.parentElement?.classList.contains(editorContentElementName)) {
-        topBlockElement = currentElement
-        break
-      }
+    topBlockElement = currentElement.closest<HTMLElement>(this.topBlockElementTagName)
+    if (topBlockElement && editorContentElement.contains(topBlockElement)) {
+      return topBlockElement
     }
-    if (topBlockElement?.tagName !== this.topBlockElementTagName) {
-      return null
-    }
-    return topBlockElement
+    return null
   }
 
   static getTopBlockElementFromSelection(selection: Selection): HTMLElement | null {
@@ -82,10 +77,7 @@ export class CodeVCNEditorHelper {
    * Tạo 1 block mới và đặt caret vào block mới
    * @returns Block mới đã được chèn
    */
-  static insertNewTopBlockElementAfterElement(element?: HTMLElement): HTMLElement | null {
-    const selection = editorContent.checkIsFocusingInEditorContent()
-    if (!selection) return null
-
+  static insertNewTopBlockElementAfterElement(selection: Selection, element?: HTMLElement): HTMLElement {
     let newBlockElement: HTMLElement
 
     if (element) {
@@ -104,15 +96,9 @@ export class CodeVCNEditorHelper {
   }
 
   static moveCaretToStartOfElement(element: HTMLElement, selection: Selection, selectionRange: Range): void {
+    // caret đặt ngay trước node con đầu tiên của element
     selectionRange.setStart(element, 0)
     selectionRange.setEnd(element, 0)
-    selection.removeAllRanges()
-    selection.addRange(selectionRange)
-  }
-
-  static moveCaretToEndOfElement(element: HTMLElement, selection: Selection, selectionRange: Range): void {
-    selectionRange.selectNodeContents(element)
-    selectionRange.collapse(false)
     selection.removeAllRanges()
     selection.addRange(selectionRange)
   }
@@ -137,10 +123,10 @@ export class CodeVCNEditorHelper {
       if (lastChild.nodeType === Node.TEXT_NODE) {
         // caret ở cuối text node
         range.setStart(lastChild, lastChild.textContent?.length || 0)
+        range.setEnd(lastChild, lastChild.textContent?.length || 0)
       } else {
-        // caret ở cuối nội dung node element
+        // nếu ko phải text node thì caret ở cuối content của node element
         range.selectNodeContents(lastChild)
-        range.collapse(false)
       }
     } else {
       // nếu rỗng thì collapse trong content element
@@ -153,6 +139,112 @@ export class CodeVCNEditorHelper {
     contentElement.focus()
     selection.removeAllRanges()
     selection.addRange(range)
+  }
+
+  static removeEmptyElements(...elements: HTMLElement[]): void {
+    for (const element of elements) {
+      if (this.isEmptyElement(element)) {
+        element.remove()
+      }
+    }
+  }
+
+  /**
+   * Xóa tất cả các element con rỗng trong container.
+   * "Rỗng" nghĩa là:
+   *  - Không có text node chứa ký tự (kể cả khoảng trắng),
+   *  - Và không có element con nào khác còn lại sau khi kiểm tra.
+   */
+  static removeEmptyChildElements(container: HTMLElement): void {
+    const children = Array.from(container.children)
+    for (const child of children) {
+      if (child instanceof HTMLElement) {
+        // Kiểm tra đệ quy các con trước
+        this.removeEmptyChildElements(child)
+        if (this.isEmptyElement(child)) {
+          child.remove()
+        }
+      }
+    }
+  }
+
+  /**
+   * Kiểm tra element có rỗng không bằng cách duyệt các child node trực tiếp.
+   * Trả về true nếu element ko có text node nào hoặc element có ít nhất 1 element con (element con này chưa biết có rỗng hay ko)
+   */
+  static isEmptyElement(element: HTMLElement): boolean {
+    for (const node of element.childNodes) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        // Nếu có bất kỳ text node nào (kể cả toàn dấu cách, xuống dòng),
+        // thì ta coi element này là KHÔNG rỗng
+        if ((node as Text).data.length > 0) {
+          return false
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        // Nếu còn phần tử con thì không rỗng
+        return false
+      }
+    }
+    return true
+  }
+
+  static checkIfElementContainsText(element: HTMLElement): boolean {
+    const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        // Nếu node có độ dài > 0 (bao gồm khoảng trắng), thì coi là có text
+        return node.nodeValue && node.nodeValue.length > 0 ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT
+      },
+    })
+    return !!walker.nextNode()
+  }
+
+  static getDeepestChildOfElement(element: HTMLElement): HTMLElement | null {
+    let currentElement: HTMLElement = element
+    while (currentElement.lastChild && currentElement.lastChild instanceof HTMLElement) {
+      currentElement = currentElement.lastChild as HTMLElement
+    }
+    return currentElement
+  }
+
+  static splitTopBlockElementAtCaret(topBlockElement: HTMLElement, selection: Selection): HTMLElement[] {
+    const range = selection.getRangeAt(0)
+
+    // Đoạn trước caret
+    const beforeRange = range.cloneRange()
+    beforeRange.setStartBefore(topBlockElement)
+    const beforeFrag = beforeRange.cloneContents()
+
+    // Đoạn sau caret
+    const afterRange = range.cloneRange()
+    afterRange.setEndAfter(topBlockElement)
+    const afterFrag = afterRange.cloneContents()
+
+    const beforeTopBlock = beforeFrag.firstChild as HTMLElement
+    if (!this.checkIfElementContainsText(beforeTopBlock)) {
+      const deepestChild = this.getDeepestChildOfElement(beforeTopBlock)
+      if (deepestChild) {
+        deepestChild.innerHTML = "<br>"
+      } else {
+        beforeTopBlock.innerHTML = "<br>"
+      }
+    }
+    const afterTopBlock = afterFrag.firstChild as HTMLElement
+    if (!this.checkIfElementContainsText(afterTopBlock)) {
+      const deepestChild = this.getDeepestChildOfElement(afterTopBlock)
+      if (deepestChild) {
+        deepestChild.innerHTML = "<br>"
+      } else {
+        afterTopBlock.innerHTML = "<br>"
+      }
+    }
+
+    // Thay thế topBlock cũ
+    topBlockElement.replaceWith(beforeTopBlock, afterTopBlock)
+
+    // Focus caret trong afterTopBlock
+    this.moveCaretToStartOfElement(afterTopBlock, selection, document.createRange())
+
+    return [beforeTopBlock, afterTopBlock]
   }
 
   static notify(type: ENotifyType, message: string) {

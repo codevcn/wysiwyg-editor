@@ -59,6 +59,9 @@
   width: 1.3rem;
   height: 1.3rem;
 }
+.NAME-codevcn-editor .NAME-editor-content section {
+  white-space: pre-wrap;
+}
 .NAME-codevcn-editor .NAME-editor-content h1,
 .NAME-codevcn-editor .NAME-editor-content h2,
 .NAME-codevcn-editor .NAME-editor-content h3,

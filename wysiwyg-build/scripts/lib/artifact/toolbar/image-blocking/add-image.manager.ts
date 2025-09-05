@@ -6,13 +6,20 @@ import { Modal } from "@/lib/components/modal"
 import { CodeVCNEditorService } from "@/services/codevcn-editor.service"
 import { html } from "lit-html"
 import { imageBlockingStylish } from "./image-blocking.stylish"
-import { TImageDimensions } from "@/types/global-types"
+import type { TImageDimensions, TImageSkeletonReplacer } from "@/types/global-types"
+
+type TMemorizedImage = {
+  imgUrl: string
+  dimensions: TImageDimensions
+  caption: string
+}
 
 class AddImageModalManager {
   private addImageModal: HTMLElement
   private uploadImageURL: string
   private maxImageSizeAllowed: number
   private maxImagesCountAllowed: number
+  private memorizedImage: TMemorizedImage | null = null
 
   constructor() {
     this.addImageModal = this.createAddImageModal()
@@ -99,18 +106,58 @@ class AddImageModalManager {
     return true
   }
 
-  private previewImage(imgName: string, url: string) {
+  private previewImage(imgAltText: string, url: string) {
     const preview = this.addImageModal.querySelector(".NAME-add-image-preview") as HTMLElement
     const image = new Image()
     image.src = url
-    image.alt = imgName
+    image.alt = imgAltText
     image.className = "w-full h-full object-contain"
     image.onload = () => {
       preview.innerHTML = ""
       preview.appendChild(image)
     }
-    const imgUrlInput = this.addImageModal.querySelector(".NAME-add-image-img-url") as HTMLInputElement
+    const imgUrlInputHidden = this.addImageModal.querySelector(".NAME-add-image-img-url") as HTMLInputElement
+    imgUrlInputHidden.value = url
+    const imgUrlInput = this.addImageModal.querySelector(".NAME-add-image-url-input") as HTMLInputElement
     imgUrlInput.value = url
+  }
+
+  private checkIfImageFile(file: File): boolean {
+    return file.type.startsWith("image/")
+  }
+
+  private memorizeImageData(imgUrl: string, dimensions: TImageDimensions, caption: string) {
+    this.memorizedImage = { imgUrl, dimensions, caption }
+  }
+
+  private renderImageSkeleton(height: number, width: number): TImageSkeletonReplacer {
+    return imageBlockingStylish.renderImageSkeleton(height, width)
+  }
+
+  async onPasteImage(e: ClipboardEvent) {
+    const clipboardData = e.clipboardData
+    if (clipboardData) {
+      const files = clipboardData.files
+      if (files && files.length > 0) {
+        const fileToUpload = files[0]
+        if (!this.checkIfImageFile(fileToUpload)) {
+          this.notify(ENotifyType.ERROR, EErrorMessage.ONLY_SUPPORT_IMAGE_FILE)
+          return
+        }
+        e.preventDefault()
+        e.stopPropagation()
+        const dimensions = await getImageDimensions(fileToUpload)
+        const { width, height } = dimensions
+        const skeletonReplacer = this.renderImageSkeleton(height, width)
+        const result = await CodeVCNEditorService.uploadImage(this.uploadImageURL, [fileToUpload], (progress) => {
+          console.log(">>> progress:", progress)
+        })
+        const imgUrl = result.files[0].url
+        const imgName = fileToUpload.name
+        this.memorizeImageData(imgUrl, dimensions, imgName)
+        imageBlockingStylish.onAction({ width, height, altText: imgName, imgUrl }, skeletonReplacer)
+      }
+    }
   }
 
   private async fillImageDimensions(imgDimensions: TImageDimensions) {
@@ -134,12 +181,21 @@ class AddImageModalManager {
       })
       this.previewImage(files[0].name, result.files[0].url)
       const dimensions = await getImageDimensions(files[0])
-      console.log(">>> dimensions:", dimensions)
       this.fillImageDimensions(dimensions)
     }
     input.value = ""
     input.files = null
     input.src = ""
+  }
+
+  private async onChangeImageURL(e: Event) {
+    e.preventDefault()
+    e.stopPropagation()
+    const input = e.currentTarget as HTMLInputElement
+    const url = input.value
+    this.previewImage("", url)
+    const imgInfo = await CodeVCNEditorService.fetchImageInfo(url)
+    this.fillImageDimensions(imgInfo)
   }
 
   private onAction(e: PointerEvent) {
@@ -210,8 +266,10 @@ class AddImageModalManager {
                 <label class="block text-sm pl-1 font-medium text-black">Image URL</label>
                 <input
                   type="url"
+                  @change=${(e: PointerEvent) => this.onChangeImageURL(e)}
                   placeholder="Example: https://example.com/image.jpg"
-                  class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+                  class="NAME-add-image-url-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+                  value=${this.memorizedImage?.imgUrl || ""}
                 />
               </section>
             </div>
@@ -220,8 +278,10 @@ class AddImageModalManager {
               <label class="block text-sm pl-1 font-medium text-black">Image Preview</label>
               <div class="border border-gray-300 rounded-lg p-2 bg-gray-100">
                 <div class="NAME-add-image-preview flex flex-col items-center justify-center text-gray-500">
-                  <i class="bi bi-image text-4xl mb-4 font-bold"></i>
-                  <p class="text-sm">No image selected</p>
+                  ${this.memorizedImage
+                    ? html` <img src=${this.memorizedImage?.imgUrl || ""} alt=${this.memorizedImage?.caption || ""} /> `
+                    : html`<i class="bi bi-image text-4xl font-bold"></i>
+                        <p class="text-sm mt-2">No image selected</p>`}
                 </div>
               </div>
             </div>
@@ -240,6 +300,7 @@ class AddImageModalManager {
                     placeholder="800"
                     name="img-width"
                     class="NAME-add-image-width-input w-full px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+                    value=${this.memorizedImage?.dimensions.width || ""}
                   />
                 </div>
                 <div class="space-y-2">
@@ -249,6 +310,7 @@ class AddImageModalManager {
                     placeholder="600"
                     name="img-height"
                     class="NAME-add-image-height-input w-full px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200"
+                    value=${this.memorizedImage?.dimensions.height || ""}
                   />
                 </div>
               </div>
@@ -260,7 +322,9 @@ class AddImageModalManager {
                   rows="5"
                   name="img-caption"
                   class="w-full grow px-4 py-1.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 focus:border-transparent transition-all duration-200 resize-none"
-                ></textarea>
+                >
+${this.memorizedImage?.caption || ""}</textarea
+                >
               </div>
             </form>
           </div>

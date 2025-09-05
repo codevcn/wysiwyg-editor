@@ -55,6 +55,10 @@
     }
   }
 
+  section {
+    white-space: pre-wrap; // giữ nguyên cả dấu xuống dòng và khoảng trắng
+  }
+
   h1,
   h2,
   h3,
