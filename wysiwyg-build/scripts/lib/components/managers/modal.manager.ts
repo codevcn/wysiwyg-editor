@@ -7,14 +7,16 @@ export class ModalManager {
     const modalElement = this.getModalElement()
     if (!modalElement) return
     const { bodyLitHTML, title, footerLitHTML } = params[0]
-    modalElement.querySelector(".NAME-modal-body")!.appendChild(LitHTMLHelper.createFromRenderer(() => bodyLitHTML, []))
+    modalElement
+      .querySelector(".NAME-modal-body")!
+      .replaceChildren(LitHTMLHelper.createFromRenderer(() => bodyLitHTML, []))
     if (title) {
       modalElement.querySelector(".NAME-modal-title")!.textContent = title
     }
     if (footerLitHTML) {
       const modalFooterElement = modalElement.querySelector(".NAME-modal-footer")
       if (modalFooterElement) {
-        modalFooterElement.appendChild(LitHTMLHelper.createFromRenderer(() => footerLitHTML, []))
+        modalFooterElement.replaceChildren(LitHTMLHelper.createFromRenderer(() => footerLitHTML, []))
       }
     }
     modalElement.classList.add("STATE-show")
@@ -44,7 +46,7 @@ export class ModalManager {
     if (modalElement) {
       return modalElement
     }
-    modalElement = LitHTMLHelper.createFromRenderer(Modal, [{ bodyLitHTML: html`` }])
+    modalElement = LitHTMLHelper.createFromRenderer<typeof Modal>(Modal, [{ bodyLitHTML: html`` }])
     document.body.appendChild(modalElement)
     this.bindHideEventHandler(modalElement)
     return modalElement

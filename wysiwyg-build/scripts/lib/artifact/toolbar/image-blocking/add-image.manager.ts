@@ -134,6 +134,12 @@ class AddImageModalManager {
     return imageBlockingStylish.renderImageSkeleton(height, width)
   }
 
+  private async uploadImageFile(file: File) {
+    return await CodeVCNEditorService.uploadImage(this.uploadImageURL, [file], (progress) => {
+      console.log(">>> progress:", progress)
+    })
+  }
+
   async onPasteImage(e: ClipboardEvent) {
     const clipboardData = e.clipboardData
     if (clipboardData) {
@@ -149,9 +155,7 @@ class AddImageModalManager {
         const dimensions = await getImageDimensions(fileToUpload)
         const { width, height } = dimensions
         const skeletonReplacer = this.renderImageSkeleton(height, width)
-        const result = await CodeVCNEditorService.uploadImage(this.uploadImageURL, [fileToUpload], (progress) => {
-          console.log(">>> progress:", progress)
-        })
+        const result = await this.uploadImageFile(fileToUpload)
         const imgUrl = result.files[0].url
         const imgName = fileToUpload.name
         this.memorizeImageData(imgUrl, dimensions, imgName)
@@ -168,7 +172,7 @@ class AddImageModalManager {
     heightInput.value = `${height}`
   }
 
-  private async onPickImageFile(e: PointerEvent) {
+  private async onImageFilePicked(e: PointerEvent) {
     e.preventDefault()
     e.stopPropagation()
     const input = e.currentTarget as HTMLInputElement
@@ -176,9 +180,7 @@ class AddImageModalManager {
     if (filesList && filesList.length > 0) {
       const files = Array.from(filesList)
       if (!this.validateImageFiles(files)) return
-      const result = await CodeVCNEditorService.uploadImage(this.uploadImageURL, files, (progress) => {
-        console.log(">>> progress:", progress)
-      })
+      const result = await this.uploadImageFile(files[0])
       this.previewImage(files[0].name, result.files[0].url)
       const dimensions = await getImageDimensions(files[0])
       this.fillImageDimensions(dimensions)
@@ -196,6 +198,51 @@ class AddImageModalManager {
     this.previewImage("", url)
     const imgInfo = await CodeVCNEditorService.fetchImageInfo(url)
     this.fillImageDimensions(imgInfo)
+  }
+
+  private bindDragAndDropImageEvent() {
+    const dropZone = this.addImageModal.querySelector<HTMLElement>(".NAME-add-image-drop-zone")
+    if (!dropZone) return
+
+    // Ngăn trình duyệt mở ảnh khi kéo thả
+    for (const eventName of ["dragenter", "dragover", "dragleave", "drop"]) {
+      dropZone.addEventListener(eventName, (e) => {
+        e.preventDefault()
+        e.stopPropagation()
+      })
+    }
+
+    // Highlight khi kéo file vào
+    for (const eventName of ["dragenter", "dragover"]) {
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.add("bg-gray-100")
+      })
+    }
+
+    // Remove highlight khi kéo file ra
+    for (const eventName of ["dragleave", "drop"]) {
+      dropZone.addEventListener(eventName, () => {
+        dropZone.classList.remove("bg-gray-100")
+      })
+    }
+
+    // Xử lý khi thả file
+    dropZone.addEventListener("drop", async (e) => {
+      const files = e.dataTransfer?.files || []
+      if (files.length === 0) return
+
+      // Ví dụ: chỉ lấy file ảnh
+      const images = Array.from(files).filter((file) => this.checkIfImageFile(file))
+
+      if (images.length > 0) {
+        // Ở đây bạn có thể upload ảnh hoặc preview
+        const fileToUpload = files[0]
+        const result = await this.uploadImageFile(fileToUpload)
+        this.previewImage(fileToUpload.name, result.files[0].url)
+        const dimensions = await getImageDimensions(fileToUpload)
+        this.fillImageDimensions(dimensions)
+      }
+    })
   }
 
   private onAction(e: PointerEvent) {
@@ -235,7 +282,7 @@ class AddImageModalManager {
 
             <div class="NAME-add-image-content STATE-upload space-y-4">
               <input
-                @change=${(e: PointerEvent) => this.onPickImageFile(e)}
+                @change=${(e: PointerEvent) => this.onImageFilePicked(e)}
                 type="file"
                 multiple
                 accept=".svg,.png,.jpg,.jpeg,.gif"
@@ -244,7 +291,7 @@ class AddImageModalManager {
               />
               <section
                 @click=${(e: PointerEvent) => this.pickImageFile(e)}
-                class="NAME-add-image-upload-section hover:bg-gray-50 border-2 border-dashed rounded-xl p-8 text-center border-gray-400 transition-colors duration-200 cursor-pointer"
+                class="NAME-add-image-upload-section NAME-add-image-drop-zone hover:bg-gray-50 border-2 border-dashed rounded-xl p-8 text-center border-gray-400 transition-colors duration-200 cursor-pointer"
               >
                 <div class="flex flex-col items-center space-y-4">
                   <div class="p-4 rounded-full bg-gray-100 transition-colors duration-200">
@@ -347,6 +394,7 @@ ${this.memorizedImage?.caption || ""}</textarea
         `,
       },
     ])
+    this.bindDragAndDropImageEvent()
   }
 }
 

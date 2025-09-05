@@ -1,4 +1,3 @@
-import { delay } from "@/dev/helpers"
 import type { TImageInfoRes, TUploadImageRes } from "@/types/api-types"
 import axios from "axios"
 
@@ -12,7 +11,6 @@ export class CodeVCNEditorService {
     files: File[],
     onProgress: (progress: number) => void
   ): Promise<TUploadImageRes> {
-    await delay(20000)
     const formData = new FormData()
     for (const file of files) {
       formData.append("images", file)

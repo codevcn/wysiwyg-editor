@@ -66,11 +66,17 @@ class ImageBlockingStylish {
     return LitHTMLHelper.createFromRenderer(Skeleton, [{ width, height }])
   }
 
-  private insertImageSkeleton(topBlockElement: HTMLElement, height: number, width: number): HTMLElement {
+  private insertImageSkeleton(
+    topBlockElement: HTMLElement,
+    selection: Selection,
+    height: number,
+    width: number
+  ): HTMLElement {
     const imageSkeleton = this.createImageSkeleton(height, width)
     const pElement = document.createElement("p")
     pElement.innerHTML = "<br>"
     topBlockElement.replaceChildren(pElement, imageSkeleton)
+    CodeVCNEditorHelper.moveCaretToStartOfElement(pElement, selection, selection.getRangeAt(0))
     return imageSkeleton
   }
 
@@ -89,10 +95,10 @@ class ImageBlockingStylish {
     }
     let imageSkeleton: HTMLElement
     if (isEmpty) {
-      imageSkeleton = this.insertImageSkeleton(topBlockElement, height, width)
+      imageSkeleton = this.insertImageSkeleton(topBlockElement, selection, height, width)
     } else {
       const newBlockElement = CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
-      imageSkeleton = this.insertImageSkeleton(newBlockElement, height, width)
+      imageSkeleton = this.insertImageSkeleton(newBlockElement, selection, height, width)
     }
     return (imageElement: HTMLImageElement) => {
       imageSkeleton.replaceWith(imageElement)
@@ -100,7 +106,6 @@ class ImageBlockingStylish {
   }
 
   onAction({ imgUrl, altText, height, width }: TImageProperties, skeletonReplacer?: TImageSkeletonReplacer) {
-    console.log(">>> on action:", { imgUrl, altText, height, width })
     this.makeImageBlocking({ imgUrl, altText, height, width }, skeletonReplacer)
   }
 }
