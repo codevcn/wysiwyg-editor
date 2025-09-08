@@ -27,6 +27,10 @@ export enum EImageBlockingType {
   IMAGE_BLOCKING = "image-blocking",
 }
 
+export enum ETextLinkingType {
+  TEXT_LINKING = "text-linking",
+}
+
 export enum EToolbarAction {
   BOLD = "text-styling-bold",
   ITALIC = "text-styling-italic",
@@ -37,9 +41,11 @@ export enum EToolbarAction {
   BULLET_LIST = "text-listing-bullet-list",
   BLOCKQUOTE = "text-blocking-blockquote",
   IMAGE_BLOCKING = "image-blocking",
+  TEXT_LINKING = "text-linking",
 }
 
 export enum EErrorMessage {
+  ANCHOR_NODE_NOT_FOUND = "Anchor node was not found",
   QUOTE_LINE_ELEMENT_NOT_FOUND = "Quote line element not found",
   INVALID_UPLOAD_IMAGE_URL = "Invalid upload image URL",
   IMAGE_SIZE_TOO_LARGE = "Image size too large",
@@ -48,6 +54,7 @@ export enum EErrorMessage {
   SELECTION_NOT_FOUND = "Selection not found in editor content",
   ONLY_SUPPORT_IMAGE_FILE = "Only support image file",
   TOP_BLOCK_NOT_FOUND = "Top block element not found",
+  TEXT_LINK_FORM_NOT_FOUND = "Text link form not found",
 }
 
 export enum ENotifyType {

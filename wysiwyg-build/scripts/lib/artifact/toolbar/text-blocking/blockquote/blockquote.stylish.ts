@@ -4,8 +4,8 @@ import { EditorInternalErrorHelper } from "@/helpers/error-helper.js"
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
 class BlockquoteStylish {
-  private blockQuoteTagName: string = "BLOCKQUOTE"
-  private quoteLineTagName: string = "P"
+  private readonly blockQuoteTagName: string = "BLOCKQUOTE"
+  private readonly quoteLineTagName: string = "P"
   private currentBlockquoteElement: HTMLElement | null = null
 
   constructor() {}

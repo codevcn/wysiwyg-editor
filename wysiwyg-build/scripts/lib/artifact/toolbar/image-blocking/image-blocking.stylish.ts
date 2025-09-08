@@ -14,7 +14,7 @@ type TImageProperties = {
 }
 
 class ImageBlockingStylish {
-  private imageBlockingTagName: string = "IMG"
+  private readonly imageBlockingTagName: string = "IMG"
 
   constructor() {}
 

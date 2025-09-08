@@ -8,3 +8,11 @@
     pointer-events: auto;
   }
 }
+
+.NAME-popover {
+  display: none;
+
+  &.STATE-show {
+    display: block;
+  }
+}

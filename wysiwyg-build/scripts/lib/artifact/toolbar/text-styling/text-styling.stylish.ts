@@ -8,7 +8,7 @@ class TextStylingStylish {
   /**
    * Tên các thẻ styling cho từng loại styling (index theo thứ tự ưu tiên, 0 là ưu tiên nhất rồi đến 1, 2, 3, ...)
    */
-  private tagNamesForStyling: Record<ETextStylingType, string[]> = {
+  private readonly tagNamesForStyling: Record<ETextStylingType, string[]> = {
     [ETextStylingType.BOLD]: ["B", "STRONG"],
     [ETextStylingType.ITALIC]: ["I", "EM"],
     [ETextStylingType.UNDERLINE]: ["U", "INS"],
@@ -45,10 +45,9 @@ class TextStylingStylish {
    * Lấy thẻ <styling tag> gần nhất chứa đầy đủ vùng bôi đen.
    */
   private setParentStylingElement(selectionRange: Range): void {
+    const startContainer = selectionRange.startContainer
     let node =
-      selectionRange.startContainer.nodeType === Node.TEXT_NODE
-        ? (selectionRange.startContainer.parentNode as HTMLElement)
-        : (selectionRange.startContainer as HTMLElement)
+      startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : (startContainer as HTMLElement)
     if (!node) return
     this.parentStylingElement = CodeVCNEditorHelper.getClosestElementOfNode(
       node,

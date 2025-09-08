@@ -6,9 +6,8 @@ import { repeat } from "lit-html/directives/repeat.js"
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { addImageModalManager } from "./add-image.manager.js"
-import { editorContent } from "../../content/editor.content.js"
 
-export class ImageBlockingModule {
+class ImageBlockingModule {
   private sectionElement: HTMLElement
   private actions: TToolbarAction[] = [
     {

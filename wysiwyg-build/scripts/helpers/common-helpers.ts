@@ -25,14 +25,17 @@ export class LitHTMLHelper {
 }
 
 /**
- * Kiểm tra string có phải URL hợp lệ không
+ * Kiểm tra string có phải URL hợp lệ không, chỉ chấp nhận protocol là https hoặc http
  * @param {string} str
  * @returns {boolean}
  */
 export function isValidUrl(str: string): boolean {
   try {
-    new URL(str)
-    return true
+    const urlProtocol = new URL(str).protocol
+    if (urlProtocol === "https:" || urlProtocol === "http:") {
+      return true
+    }
+    return false
   } catch (_) {
     return false
   }

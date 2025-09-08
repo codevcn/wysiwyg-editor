@@ -7,6 +7,7 @@ import { CodeVCNEditorService } from "@/services/codevcn-editor.service"
 import { html } from "lit-html"
 import { imageBlockingStylish } from "./image-blocking.stylish"
 import type { TImageDimensions, TImageSkeletonReplacer } from "@/types/global-types"
+import { editorMaterials } from "../../layout/editor.materials"
 
 type TMemorizedImage = {
   imgUrl: string
@@ -22,7 +23,7 @@ class AddImageModalManager {
   private memorizedImage: TMemorizedImage | null = null
 
   constructor() {
-    this.addImageModal = this.createAddImageModal()
+    this.addImageModal = editorMaterials.getModalElement()
     this.uploadImageURL = ""
     this.maxImageSizeAllowed = 10 * 1024 * 1024 // 10MB
     this.maxImagesCountAllowed = 5
@@ -35,16 +36,8 @@ class AddImageModalManager {
     this.uploadImageURL = url
   }
 
-  getAddImageModal(): HTMLElement {
-    return this.addImageModal
-  }
-
   getUploadImageURL(): string {
     return this.uploadImageURL
-  }
-
-  private createAddImageModal(): HTMLElement {
-    return ModalManager.initModal()
   }
 
   private switchAddImageType(e: PointerEvent) {
@@ -261,7 +254,7 @@ class AddImageModalManager {
     ModalManager.showModal<typeof Modal>([
       {
         title: "Add Image",
-        bodyLitHTML: html`
+        body: html`
           <div class="NAME-add-image-container p-4 space-y-6 h-full">
             <div class="NAME-add-image-type-buttons STATE-upload flex gap-2 bg-gray-100 rounded-xl p-1">
               <button
@@ -376,7 +369,7 @@ ${this.memorizedImage?.caption || ""}</textarea
             </form>
           </div>
         `,
-        footerLitHTML: html`
+        footer: html`
           <div class="flex items-center justify-end gap-3 text-base">
             <button
               @click=${() => ModalManager.hideModal(this.addImageModal)}

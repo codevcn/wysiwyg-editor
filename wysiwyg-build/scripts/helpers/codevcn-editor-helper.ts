@@ -35,18 +35,17 @@ export class CodeVCNEditorHelper {
   static createNewTopBlockElement(): HTMLElement {
     const newBlock = document.createElement("section")
     newBlock.innerHTML = "<br>"
-    newBlock.classList.add(crypto.randomUUID().slice(0, 8))
     return newBlock
   }
 
   static getClosestElementOfNode(startNode: HTMLElement, selector: (node: HTMLElement) => boolean): HTMLElement | null {
-    let currentElement: HTMLElement = startNode
+    let currentElement: HTMLElement | null = startNode
     const editorContentElement = editorContent.getContentElement()
     while (currentElement && editorContentElement.contains(currentElement)) {
       if (selector(currentElement)) {
         return currentElement
       }
-      currentElement = currentElement.parentNode as HTMLElement
+      currentElement = currentElement.parentElement
     }
     return null
   }
@@ -245,6 +244,24 @@ export class CodeVCNEditorHelper {
     this.moveCaretToStartOfElement(afterTopBlock, selection, document.createRange())
 
     return [beforeTopBlock, afterTopBlock]
+  }
+
+  static isSelectingText(): boolean {
+    const selection = window.getSelection()
+    return !!selection && !selection.isCollapsed
+  }
+
+  static showFloatingElementAtCaret(selection: Selection, elementShower: (left: number, top: number) => void): void {
+    const range = selection.getRangeAt(0)
+    let rect = range.getBoundingClientRect()
+
+    // Nếu caret ở cuối node mà rect rỗng → fallback
+    if (rect.x === 0 && rect.y === 0 && rect.width === 0 && rect.height === 0) {
+      const rects = range.getClientRects()
+      if (rects.length > 0) rect = rects[rects.length - 1]
+    }
+
+    elementShower(rect.left + window.scrollX, rect.bottom + window.scrollY)
   }
 
   static notify(type: ENotifyType, message: string) {

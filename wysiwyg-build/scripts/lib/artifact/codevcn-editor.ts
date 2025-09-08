@@ -1,11 +1,11 @@
-import { EditorInternalErrorHelper } from "@/helpers/error-helper.js"
 import { editorContent } from "./content/editor.content.js"
 import { editorFrame } from "./frame/editor.frame.js"
 import { editorToolbar } from "./toolbar/editor.toolbar.js"
-import { ERenderingMode } from "@/enums/global-enums.js"
+import { ENotifyType, ERenderingMode } from "@/enums/global-enums.js"
 import { sanitizeHTML } from "@/helpers/common-helpers.js"
 import { TCodeVCNEditorConfig } from "@/types/global-types.js"
 import { imageBlockingModule } from "./toolbar/image-blocking/image-blocking.module.js"
+import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
 
 class CodeVCNEditor {
   private editorWrapperID: string
@@ -14,7 +14,9 @@ class CodeVCNEditor {
   constructor(editorWrapperID: string, renderingMode: ERenderingMode = ERenderingMode.APPEND) {
     const editorWrapper = document.getElementById(editorWrapperID)
     if (!editorWrapper) {
-      throw EditorInternalErrorHelper.createError(`Container with id ${editorWrapperID} not found`)
+      const message: string = `Container with id ${editorWrapperID} not found`
+      CodeVCNEditorHelper.notify(ENotifyType.ERROR, message)
+      throw new Error(message)
     }
 
     this.editorWrapper = editorWrapper

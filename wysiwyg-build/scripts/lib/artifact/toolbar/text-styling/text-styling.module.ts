@@ -131,13 +131,13 @@ class TextStylingModule {
   }
 
   private bindDropdownEvents() {
-    const dropdowns = this.sectionElement.querySelectorAll<HTMLElement>(".NAME-custom-dropdown")
+    const dropdowns = this.sectionElement.querySelectorAll<HTMLElement>(".NAME-dropdown")
     for (const dropdown of dropdowns) {
       DropdownManager.bindDropdownClickEvent(
         dropdown,
-        "NAME-custom-dropdown",
-        "NAME-custom-dropdown-btn",
-        "NAME-custom-dropdown-option",
+        "NAME-dropdown",
+        "NAME-dropdown-btn",
+        "NAME-dropdown-option",
         (activeValue) => {
           this.onAction(activeValue as ETextStylingType)
         }

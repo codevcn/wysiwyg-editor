@@ -89,12 +89,16 @@
   img {
     display: inline-block;
   }
+
+  a {
+    cursor: pointer;
+  }
 }
 
 @mixin editor-content-dropdown-rules {
   position: relative;
 
-  .NAME-custom-dropdown-content {
+  .NAME-dropdown-content {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -109,7 +113,7 @@
     z-index: 10;
     padding: 6px;
 
-    .NAME-custom-dropdown-option {
+    .NAME-dropdown-option {
       display: flex;
       align-items: center;
       padding: 2px 6px;
@@ -128,7 +132,7 @@
   }
 
   &[data-open="true"] {
-    .NAME-custom-dropdown-content {
+    .NAME-dropdown-content {
       clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
     }
   }
@@ -159,7 +163,7 @@
     @include editor-content-tags-rules;
   }
 
-  .NAME-custom-dropdown {
+  .NAME-dropdown {
     @include editor-content-dropdown-rules;
   }
 }

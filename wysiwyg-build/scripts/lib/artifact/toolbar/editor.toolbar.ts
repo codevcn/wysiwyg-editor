@@ -4,6 +4,7 @@ import { textListingModule } from "./text-listing/text-listing.module.js"
 import { blockquoteModule } from "./text-blocking/blockquote/blockquote.module.js"
 import { imageBlockingModule } from "./image-blocking/image-blocking.module.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
+import { textLinkingModule } from "./text-linking/text-linking.module.js"
 
 class EditorToolbar {
   private toolbarElement: HTMLElement
@@ -15,6 +16,7 @@ class EditorToolbar {
     this.toolbarElement.appendChild(textListingModule.getSectionElement())
     this.toolbarElement.appendChild(blockquoteModule.getSectionElement())
     this.toolbarElement.appendChild(imageBlockingModule.getSectionElement())
+    this.toolbarElement.appendChild(textLinkingModule.getSectionElement())
   }
 
   private createToolbarElement(): HTMLElement {
