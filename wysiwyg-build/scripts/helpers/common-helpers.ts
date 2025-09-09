@@ -56,3 +56,13 @@ export const getImageDimensions = (file: File): Promise<TImageDimensions> => {
     img.src = URL.createObjectURL(file)
   })
 }
+
+export const copyTextToClipboard = (text: string, copyBoxElement?: HTMLElement): void => {
+  navigator.clipboard.writeText(text)
+  if (copyBoxElement) {
+    copyBoxElement.classList.add("STATE-copied")
+    setTimeout(() => {
+      copyBoxElement.classList.remove("STATE-copied")
+    }, 1500)
+  }
+}

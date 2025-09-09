@@ -24,14 +24,17 @@ export class PopoverManager {
     }
   }
 
-  static movePopoverToTargetCenter(target: HTMLElement, popover: HTMLElement): void {
-    const targetRect = target.getBoundingClientRect()
-    popover.style.left = `${targetRect.left + popover.offsetWidth / 2}px`
-    popover.style.top = `${targetRect.top + popover.offsetHeight / 2}px`
+  static movePopoverToTriggerCenter(trigger: HTMLElement, popover: HTMLElement): void {
+    const targetRect = trigger.getBoundingClientRect()
+    popover.style.cssText += `
+      left: ${targetRect.left + targetRect.width / 2 - popover.offsetWidth / 2}px;
+      top: ${targetRect.top + targetRect.height}px;
+      padding-top: 5px;
+    `
     this.detectCollisionWithViewportEdges(popover)
   }
 
-  static showPopover<TPopover extends typeof Popover>(target: HTMLElement, params: Parameters<TPopover>): void {
+  static showPopover<TPopover extends typeof Popover>(trigger: HTMLElement, params: Parameters<TPopover>): void {
     const popoverElement = this.popoverElement
     if (!popoverElement) return
     const { content } = params[0]
@@ -40,17 +43,41 @@ export class PopoverManager {
       contentElement.replaceChildren(LitHTMLHelper.createFromRenderer(() => content, []))
     }
     popoverElement.classList.add("STATE-show")
-    this.movePopoverToTargetCenter(target, popoverElement)
+    this.movePopoverToTriggerCenter(trigger, popoverElement)
   }
 
-  static hidePopover(popoverElement: HTMLElement): void {
-    popoverElement.classList.remove("STATE-show")
+  static forceHidePopover(): void {
+    this.popoverElement?.classList.remove("STATE-show")
   }
 
-  static bindHideEventHandler(popoverElement: HTMLElement): void {
-    popoverElement.addEventListener("mouseleave", () => {
-      this.hidePopover(popoverElement)
+  static hidePopoverOnMouseEvent(trigger: HTMLElement, e: MouseEvent): void {
+    const relatedTarget = e.relatedTarget
+    if (
+      this.popoverElement &&
+      relatedTarget &&
+      relatedTarget instanceof Node &&
+      !trigger.contains(relatedTarget) &&
+      !this.popoverElement.contains(relatedTarget)
+    ) {
+      this.popoverElement.classList.remove("STATE-show")
+    }
+  }
+
+  static bindHideEventToPopover(): void {
+    if (!this.popoverElement) return
+    if (this.popoverElement["__hasMouseLeaveEvent_popover"]) return
+    this.popoverElement.addEventListener("mouseleave", (e) => {
+      if (this.popoverElement) this.hidePopoverOnMouseEvent(this.popoverElement, e)
     })
+    this.popoverElement["__hasMouseLeaveEvent_popover"] = true
+  }
+
+  static bindHideEventToTrigger(trigger: HTMLElement): void {
+    if (trigger["__hasMouseLeaveEvent_popover"]) return
+    trigger.addEventListener("mouseleave", (e) => {
+      this.hidePopoverOnMouseEvent(trigger, e)
+    })
+    trigger["__hasMouseLeaveEvent_popover"] = true
   }
 
   static getPopoverElement(): HTMLElement | null {
@@ -60,7 +87,6 @@ export class PopoverManager {
   static initPopover(): HTMLElement {
     const popoverElement = LitHTMLHelper.createFromRenderer<typeof Popover>(Popover, [{ content: html`` }])
     document.body.appendChild(popoverElement)
-    this.bindHideEventHandler(popoverElement)
     this.popoverElement = popoverElement
     return popoverElement
   }

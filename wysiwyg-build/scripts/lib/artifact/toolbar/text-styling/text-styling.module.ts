@@ -150,7 +150,7 @@ class TextStylingModule {
     this.bindDropdownEvents()
   }
 
-  onAction(stylingType: ETextStylingType) {
+  private onAction(stylingType: ETextStylingType) {
     queueMicrotask(() => {
       textStylingStylish.onAction(stylingType)
     })

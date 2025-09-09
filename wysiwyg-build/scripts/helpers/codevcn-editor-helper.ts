@@ -38,12 +38,15 @@ export class CodeVCNEditorHelper {
     return newBlock
   }
 
-  static getClosestElementOfNode(startNode: HTMLElement, selector: (node: HTMLElement) => boolean): HTMLElement | null {
+  static getClosestElementOfNode<TElementType extends HTMLElement = HTMLElement>(
+    startNode: HTMLElement,
+    selector: (node: HTMLElement) => boolean
+  ): TElementType | null {
     let currentElement: HTMLElement | null = startNode
     const editorContentElement = editorContent.getContentElement()
     while (currentElement && editorContentElement.contains(currentElement)) {
       if (selector(currentElement)) {
-        return currentElement
+        return currentElement as TElementType
       }
       currentElement = currentElement.parentElement
     }
@@ -98,6 +101,14 @@ export class CodeVCNEditorHelper {
     // caret đặt ngay trước node con đầu tiên của element
     selectionRange.setStart(element, 0)
     selectionRange.setEnd(element, 0)
+    selection.removeAllRanges()
+    selection.addRange(selectionRange)
+  }
+
+  static moveCaretToEndOfElement(element: HTMLElement, selection: Selection, selectionRange: Range): void {
+    // caret đặt ngay sau node con cuối cùng của element
+    selectionRange.selectNodeContents(element)
+    selectionRange.collapse(false)
     selection.removeAllRanges()
     selection.addRange(selectionRange)
   }
@@ -205,63 +216,60 @@ export class CodeVCNEditorHelper {
     return currentElement
   }
 
-  static splitTopBlockElementAtCaret(topBlockElement: HTMLElement, selection: Selection): HTMLElement[] {
+  static insertElementAfterElement(beforeElement: HTMLElement, afterElement: HTMLElement): void {
+    beforeElement.insertAdjacentElement("afterend", afterElement)
+  }
+
+  /**
+   * Chia element thành 2 phần (before và after), sau đó focus caret vào element sau (element after)
+   * @param element html element
+   * @param selection selection
+   * @returns 2 element mới (before và after)
+   */
+  static splitElementInHalfAtCaret(element: HTMLElement, selection: Selection): HTMLElement[] {
     const range = selection.getRangeAt(0)
 
     // Đoạn trước caret
     const beforeRange = range.cloneRange()
-    beforeRange.setStartBefore(topBlockElement)
+    beforeRange.setStartBefore(element)
     const beforeFrag = beforeRange.cloneContents()
 
     // Đoạn sau caret
     const afterRange = range.cloneRange()
-    afterRange.setEndAfter(topBlockElement)
+    afterRange.setEndAfter(element)
     const afterFrag = afterRange.cloneContents()
 
-    const beforeTopBlock = beforeFrag.firstChild as HTMLElement
-    if (!this.checkIfElementContainsText(beforeTopBlock)) {
-      const deepestChild = this.getDeepestChildOfElement(beforeTopBlock)
+    const beforeElement = beforeFrag.firstChild as HTMLElement
+    if (!this.checkIfElementContainsText(beforeElement)) {
+      const deepestChild = this.getDeepestChildOfElement(beforeElement)
       if (deepestChild) {
         deepestChild.innerHTML = "<br>"
       } else {
-        beforeTopBlock.innerHTML = "<br>"
+        beforeElement.innerHTML = "<br>"
       }
     }
-    const afterTopBlock = afterFrag.firstChild as HTMLElement
-    if (!this.checkIfElementContainsText(afterTopBlock)) {
-      const deepestChild = this.getDeepestChildOfElement(afterTopBlock)
+    const afterElement = afterFrag.firstChild as HTMLElement
+    if (!this.checkIfElementContainsText(afterElement)) {
+      const deepestChild = this.getDeepestChildOfElement(afterElement)
       if (deepestChild) {
         deepestChild.innerHTML = "<br>"
       } else {
-        afterTopBlock.innerHTML = "<br>"
+        afterElement.innerHTML = "<br>"
       }
     }
 
-    // Thay thế topBlock cũ
-    topBlockElement.replaceWith(beforeTopBlock, afterTopBlock)
+    // Thay thế element cũ bằng 2 element mới
+    element.replaceWith(beforeElement, afterElement)
 
-    // Focus caret trong afterTopBlock
-    this.moveCaretToStartOfElement(afterTopBlock, selection, document.createRange())
+    // Focus caret trong element mới (element after)
+    this.moveCaretToStartOfElement(afterElement, selection, document.createRange())
 
-    return [beforeTopBlock, afterTopBlock]
+    return [beforeElement, afterElement]
   }
 
   static isSelectingText(): boolean {
     const selection = window.getSelection()
     return !!selection && !selection.isCollapsed
-  }
-
-  static showFloatingElementAtCaret(selection: Selection, elementShower: (left: number, top: number) => void): void {
-    const range = selection.getRangeAt(0)
-    let rect = range.getBoundingClientRect()
-
-    // Nếu caret ở cuối node mà rect rỗng → fallback
-    if (rect.x === 0 && rect.y === 0 && rect.width === 0 && rect.height === 0) {
-      const rects = range.getClientRects()
-      if (rects.length > 0) rect = rects[rects.length - 1]
-    }
-
-    elementShower(rect.left + window.scrollX, rect.bottom + window.scrollY)
   }
 
   static notify(type: ENotifyType, message: string) {

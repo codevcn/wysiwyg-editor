@@ -64,7 +64,7 @@ class TextListingModule {
     this.bindButtonEvents()
   }
 
-  onAction(listingType: ETextListingType) {
+  private onAction(listingType: ETextListingType) {
     queueMicrotask(() => {
       textListingStylish.onAction(listingType)
     })

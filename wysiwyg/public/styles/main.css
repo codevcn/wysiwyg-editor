@@ -157,6 +157,19 @@
   display: none;
 }
 
+.NAME-copy-box .NAME-copy-copy {
+  display: block;
+}
+.NAME-copy-box .NAME-copy-copied {
+  display: none;
+}
+.NAME-copy-box.STATE-copied .NAME-copy-copy {
+  display: none;
+}
+.NAME-copy-box.STATE-copied .NAME-copy-copied {
+  display: block;
+}
+
 .NAME-modal {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
@@ -171,7 +184,7 @@
   display: none;
 }
 .NAME-popover.STATE-show {
-  display: block;
+  display: flex;
 }
 
 [hidden] {

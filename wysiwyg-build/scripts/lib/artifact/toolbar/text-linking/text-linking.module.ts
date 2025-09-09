@@ -6,7 +6,6 @@ import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { ToolbarButton } from "../toolbar-button.js"
 import { textLinkingStylish } from "./text-linking.stylish.js"
-import { textLinkingManager } from "./text-linking.manager.js"
 
 class TextLinkingModule {
   private sectionElement: HTMLElement
@@ -21,13 +20,6 @@ class TextLinkingModule {
   constructor() {
     this.sectionElement = this.createSectionElement()
     this.bindEvents()
-    this.scanEditorContentForTextLink()
-  }
-
-  private scanEditorContentForTextLink(): void {
-    queueMicrotask(() => {
-      textLinkingManager.scanEditorContentForTextLink()
-    })
   }
 
   private createSectionElement(): HTMLElement {
@@ -64,12 +56,14 @@ class TextLinkingModule {
     this.bindButtonEvents()
   }
 
-  onAction(action: ETextLinkingType) {
-    switch (action) {
-      case ETextLinkingType.TEXT_LINKING:
-        textLinkingStylish.onAction()
-        break
-    }
+  private onAction(action: ETextLinkingType) {
+    queueMicrotask(() => {
+      switch (action) {
+        case ETextLinkingType.TEXT_LINKING:
+          textLinkingStylish.onAction()
+          break
+      }
+    })
   }
 }
 

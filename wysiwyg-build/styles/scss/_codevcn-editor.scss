@@ -202,3 +202,21 @@
     }
   }
 }
+
+.NAME-copy-box {
+  .NAME-copy-copy {
+    display: block;
+  }
+  .NAME-copy-copied {
+    display: none;
+  }
+
+  &.STATE-copied {
+    .NAME-copy-copy {
+      display: none;
+    }
+    .NAME-copy-copied {
+      display: block;
+    }
+  }
+}

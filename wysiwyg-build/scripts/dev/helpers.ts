@@ -1,4 +1,4 @@
-export const measureTime = (fn: () => void, label: string = "Anonymous") => {
+export const testPerformance = (fn: () => void, label: string = "Anonymous") => {
   const startTime = performance.now()
   fn()
   const endTime = performance.now()

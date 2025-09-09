@@ -58,8 +58,10 @@ class BlockquoteModule {
     this.bindButtonEvents()
   }
 
-  onAction(action: EBlockquoteType) {
-    blockquoteStylish.onAction(action)
+  private onAction(action: EBlockquoteType) {
+    queueMicrotask(() => {
+      blockquoteStylish.onAction(action)
+    })
   }
 }
 

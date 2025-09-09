@@ -4,6 +4,7 @@ import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
 import { blockquoteStylish } from "../toolbar/text-blocking/blockquote/blockquote.stylish.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { addImageModalManager } from "../toolbar/image-blocking/add-image.manager.js"
+import { textLinkingManager } from "../toolbar/text-linking/text-linking.manager.js"
 
 class EditorContent {
   private contentElement: HTMLElement
@@ -12,6 +13,20 @@ class EditorContent {
   constructor() {
     this.contentElement = this.createContentElement()
     this.initEventListeners()
+    this.bindContentEventListeners()
+    this.bindSelectionChangeEventListener()
+  }
+
+  private bindContentEventListeners(): void {
+    this.contentElement.addEventListener("click", (e) => {
+      textLinkingManager.activateLinksOnEditorContentClick(e)
+    })
+  }
+
+  private bindSelectionChangeEventListener(): void {
+    document.addEventListener("selectionchange", () => {
+      textLinkingManager.showModalOnCaretMoves()
+    })
   }
 
   getContentElementName(): string {
@@ -47,7 +62,7 @@ class EditorContent {
       if (isEmpty) {
         CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
       } else {
-        CodeVCNEditorHelper.splitTopBlockElementAtCaret(topBlockElement, selection)
+        CodeVCNEditorHelper.splitElementInHalfAtCaret(topBlockElement, selection)
       }
     } else {
       this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
@@ -88,7 +103,7 @@ class EditorContent {
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0) return null
     const { anchorNode, focusNode } = selection
-    if (!anchorNode) return null
+    if (!anchorNode || !focusNode) return null
     if (!this.contentElement.contains(anchorNode) || !this.contentElement.contains(focusNode)) return null
     if (this.contentElement.isSameNode(anchorNode) || this.contentElement.isSameNode(focusNode)) return null
     return selection

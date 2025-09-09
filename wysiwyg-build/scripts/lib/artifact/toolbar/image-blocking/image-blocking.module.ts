@@ -63,12 +63,14 @@ class ImageBlockingModule {
     addImageModalManager.setUploadImageURL(uploadImageURL)
   }
 
-  onAction(action: EImageBlockingType) {
-    switch (action) {
-      case EImageBlockingType.IMAGE_BLOCKING:
-        addImageModalManager.showAddImageModal()
-        break
-    }
+  private onAction(action: EImageBlockingType) {
+    queueMicrotask(() => {
+      switch (action) {
+        case EImageBlockingType.IMAGE_BLOCKING:
+          addImageModalManager.showAddImageModal()
+          break
+      }
+    })
   }
 }
 

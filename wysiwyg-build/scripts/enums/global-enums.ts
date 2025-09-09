@@ -45,7 +45,7 @@ export enum EToolbarAction {
 }
 
 export enum EErrorMessage {
-  ANCHOR_NODE_NOT_FOUND = "Anchor node was not found",
+  ANCHOR_NODE_NOT_FOUND_OR_NOT_ELEMENT = "Anchor node was not found or not an element",
   QUOTE_LINE_ELEMENT_NOT_FOUND = "Quote line element not found",
   INVALID_UPLOAD_IMAGE_URL = "Invalid upload image URL",
   IMAGE_SIZE_TOO_LARGE = "Image size too large",
