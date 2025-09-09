@@ -5,7 +5,7 @@ import { repeat } from "lit-html/directives/repeat.js"
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { ToolbarButton } from "../toolbar-button.js"
-import { textLinkingStylish } from "./text-linking.stylish.js"
+import { textLinkingManager } from "./text-linking.manager.js"
 
 class TextLinkingModule {
   private sectionElement: HTMLElement
@@ -60,7 +60,7 @@ class TextLinkingModule {
     queueMicrotask(() => {
       switch (action) {
         case ETextLinkingType.TEXT_LINKING:
-          textLinkingStylish.onAction()
+          textLinkingManager.showModalOnAction()
           break
       }
     })

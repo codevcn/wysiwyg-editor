@@ -4,11 +4,11 @@ import { textLinkingStylish } from "./text-linking.stylish"
 import { PopoverManager } from "@/lib/components/managers/popover.manager"
 import { ModalManager } from "@/lib/components/managers/modal.manager"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
-import { EErrorMessage } from "@/enums/global-enums"
+import { EErrorMessage, EInternalEvents } from "@/enums/global-enums"
 import { editorMaterials } from "../../layout/editor.materials"
 import { copyTextToClipboard, isValidUrl } from "@/helpers/common-helpers"
-
-type TSaveLinkOnAction = (link: string, textOfLink: string | null) => void
+import type { TOnSaveLink } from "@/types/api-types"
+import { eventEmitter } from "../../event/event-emitter"
 
 type TTextLinkFormData = {
   link: string
@@ -17,15 +17,17 @@ type TTextLinkFormData = {
 
 class TextLinkingManager {
   private linkTyping: string = ""
-  private saveLinkOnAction?: TSaveLinkOnAction
+  private onSaveLink?: TOnSaveLink
   private textLinkForm: HTMLFormElement | null = null
   private debounceTimer: NodeJS.Timeout | undefined = undefined
   private currentLink: string | null = null
   private currentTextOfLink: string | null = null
-  private currentTextLinkElement: HTMLLinkElement | null = null
+  private currentTextLinkElement: HTMLAnchorElement | null = null
 
   constructor() {
-    this.scanEditorContentForTextLink()
+    eventEmitter.on(EInternalEvents.BIND_TEXT_LINK_POPOVER_EVENT, (textLinkElement) => {
+      this.setupTextLinkElementToShowPopover(textLinkElement)
+    })
   }
 
   private copyTextLinkToClipboard(link: string, copyBoxElement: HTMLElement): void {
@@ -84,8 +86,8 @@ class TextLinkingManager {
     if (!formData) return
     if (this.currentTextLinkElement) {
       textLinkingStylish.updateLink(formData.link, formData.textOfLink, this.currentTextLinkElement)
-    } else if (this.saveLinkOnAction) {
-      this.saveLinkOnAction(formData.link, formData.textOfLink)
+    } else if (this.onSaveLink) {
+      this.onSaveLink(formData.link, formData.textOfLink)
     }
   }
 
@@ -159,20 +161,17 @@ class TextLinkingManager {
     this.textLinkForm.querySelector<HTMLInputElement>(".NAME-link-input")?.focus()
   }
 
-  showModalOnAction(
-    link: string | null,
-    textOfLink: string | null,
-    textLinkElement: HTMLLinkElement | null,
-    saveLinkOnAction: TSaveLinkOnAction
-  ): void {
-    this.currentLink = link
-    this.currentTextLinkElement = textLinkElement
-    this.currentTextOfLink = textOfLink
-    this.saveLinkOnAction = saveLinkOnAction
-    this.showEditLinkModal()
+  showModalOnAction(): void {
+    textLinkingStylish.onAction((link, textOfLink, textLinkElement, onSaveLink) => {
+      this.currentLink = link
+      this.currentTextLinkElement = textLinkElement
+      this.currentTextOfLink = textOfLink
+      this.onSaveLink = onSaveLink
+      this.showEditLinkModal()
+    })
   }
 
-  private showModalOnPopover(link: string | null, textLinkElement: HTMLLinkElement): void {
+  private showModalOnPopover(link: string | null, textLinkElement: HTMLAnchorElement): void {
     this.currentLink = link
     this.currentTextOfLink = textLinkElement.textContent
     this.currentTextLinkElement = textLinkElement
@@ -185,9 +184,7 @@ class TextLinkingManager {
     if (!link || !textLinkElement) return
     PopoverManager.showPopover(textLinkElement, [
       {
-        content: html`<div
-          class="flex items-center gap-1 bg-white text-gray-800 rounded-md py-1 px-2 border border-gray-400 shadow-md"
-        >
+        content: html`<div class="flex items-center gap-1 text-gray-800 rounded-md py-1 px-2">
           <div class="text-gray-600 text-xs truncate max-w-[250px] w-fit">${link}</div>
           <button
             class="NAME-copy-box cursor-pointer p-1 hover:bg-gray-200 rounded-md"
@@ -210,17 +207,18 @@ class TextLinkingManager {
     ])
   }
 
-  setupTextLinkElementToShowPopover(textLinkElement: HTMLLinkElement): void {
+  setupTextLinkElementToShowPopover(textLinkElement: HTMLAnchorElement): void {
     textLinkElement.addEventListener("mouseenter", () => {
       this.currentLink = textLinkElement.getAttribute("href")
       this.currentTextOfLink = textLinkElement.textContent
+      this.currentTextLinkElement = textLinkElement
       this.showTextLinkPopover()
     })
-    PopoverManager.bindHideEventToTrigger(textLinkElement)
-    PopoverManager.bindHideEventToPopover()
+    PopoverManager.bindHideEventToTrigger(textLinkElement, 300)
+    PopoverManager.bindHideEventToPopover(300)
   }
 
-  private showPopoverWithLinkInfo(link: string, textLinkElement: HTMLLinkElement): void {
+  private showPopoverWithLinkInfo(link: string, textLinkElement: HTMLAnchorElement): void {
     this.currentLink = link
     this.currentTextLinkElement = textLinkElement
     this.showTextLinkPopover()
@@ -234,10 +232,10 @@ class TextLinkingManager {
       if (element?.tagName === textLinkingStylish.getTextLinkTagName()) {
         const link = element.getAttribute("href")
         if (link) {
-          this.showPopoverWithLinkInfo(link, element as HTMLLinkElement)
+          this.showPopoverWithLinkInfo(link, element as HTMLAnchorElement)
         }
       } else {
-        const linkElement = element?.closest<HTMLLinkElement>(textLinkingStylish.getTextLinkTagName())
+        const linkElement = element?.closest<HTMLAnchorElement>(textLinkingStylish.getTextLinkTagName())
         if (linkElement && editorContent.getContentElement().contains(linkElement)) {
           const link = linkElement.getAttribute("href")
           if (link) {
@@ -268,9 +266,9 @@ class TextLinkingManager {
     }
   }
 
-  private scanEditorContentForTextLink(): void {
+  scanEditorContentForTextLink(): void {
     const editorContentElement = editorContent.getContentElement()
-    const textLinkElements = editorContentElement.querySelectorAll<HTMLLinkElement>(
+    const textLinkElements = editorContentElement.querySelectorAll<HTMLAnchorElement>(
       textLinkingStylish.getTextLinkTagName()
     )
     for (const textLinkElement of textLinkElements) {
@@ -279,10 +277,6 @@ class TextLinkingManager {
         this.setupTextLinkElementToShowPopover(textLinkElement)
       }
     }
-  }
-
-  showLinkModalHandler(): void {
-    this.showEditLinkModal()
   }
 }
 

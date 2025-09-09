@@ -272,6 +272,13 @@ export class CodeVCNEditorHelper {
     return !!selection && !selection.isCollapsed
   }
 
+  static removeOverlapChildTags(parent: HTMLElement, descendantTagNames: string[]): void {
+    const descendants = Array.from(parent.querySelectorAll<HTMLElement>(descendantTagNames.join(",")))
+    for (const descendant of descendants) {
+      descendant.replaceWith(...descendant.childNodes)
+    }
+  }
+
   static notify(type: ENotifyType, message: string) {
     const notificationElement = document.createElement("div")
     notificationElement.className =

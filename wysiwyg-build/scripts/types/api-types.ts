@@ -10,3 +10,5 @@ export type TImageInfoRes = {
   width: number
   height: number
 }
+
+export type TOnSaveLink = (link: string, textOfLink: string | null) => void

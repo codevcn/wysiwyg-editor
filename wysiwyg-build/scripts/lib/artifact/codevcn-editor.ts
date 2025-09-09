@@ -6,6 +6,7 @@ import { sanitizeHTML } from "@/helpers/common-helpers.js"
 import { TCodeVCNEditorConfig } from "@/types/global-types.js"
 import { imageBlockingModule } from "./toolbar/image-blocking/image-blocking.module.js"
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { textLinkingManager } from "./toolbar/text-linking/text-linking.manager.js"
 
 class CodeVCNEditor {
   private editorWrapperID: string
@@ -38,6 +39,7 @@ class CodeVCNEditor {
    */
   setContent(html: string): void {
     editorContent.getContentElement().innerHTML = sanitizeHTML(html)
+    this.setupEditorContent()
   }
 
   /**
@@ -66,6 +68,10 @@ class CodeVCNEditor {
 
   getFrameElement(): HTMLElement {
     return editorFrame.getFrameElement()
+  }
+
+  setupEditorContent(): void {
+    textLinkingManager.scanEditorContentForTextLink()
   }
 
   configModule(configs: TCodeVCNEditorConfig) {

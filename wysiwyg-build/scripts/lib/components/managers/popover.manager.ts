@@ -1,37 +1,32 @@
 import { LitHTMLHelper } from "@/helpers/common-helpers"
 import { html } from "lit-html"
 import { Popover } from "../popover"
+import { PageLayoutHelper } from "@/helpers/page-layout-helper"
 
 export class PopoverManager {
   private static popoverElement: HTMLElement | null = null
 
-  private static detectCollisionWithViewportEdges(popover: HTMLElement): void {
-    const margin: number = 10
-    const popoverRect = popover.getBoundingClientRect()
-    const viewportWidth = window.innerWidth
-    const viewportHeight = window.innerHeight
-    if (popoverRect.left < 0) {
-      popover.style.left = `${margin}px`
-    }
-    if (popoverRect.right > viewportWidth) {
-      popover.style.left = `${viewportWidth - popover.offsetWidth - margin}px`
-    }
-    if (popoverRect.top < 0) {
-      popover.style.top = `${margin}px`
-    }
-    if (popoverRect.bottom > viewportHeight) {
-      popover.style.top = `${viewportHeight - popover.offsetHeight - margin}px`
+  private static moveArrowPosition(triggerRect: DOMRect, popover: HTMLElement): void {
+    const arrowElement = popover.querySelector<HTMLElement>(".NAME-popover-arrow")
+    if (arrowElement) {
+      arrowElement.style.cssText += `
+        left: ${
+          triggerRect.width / 2 -
+          arrowElement.offsetWidth / 2 +
+          (triggerRect.left - popover.getBoundingClientRect().left)
+        }px;
+      `
     }
   }
 
-  static movePopoverToTriggerCenter(trigger: HTMLElement, popover: HTMLElement): void {
-    const targetRect = trigger.getBoundingClientRect()
+  private static movePopoverToTriggerCenter(trigger: HTMLElement, popover: HTMLElement): void {
+    const triggerRect = trigger.getBoundingClientRect()
     popover.style.cssText += `
-      left: ${targetRect.left + targetRect.width / 2 - popover.offsetWidth / 2}px;
-      top: ${targetRect.top + targetRect.height}px;
-      padding-top: 5px;
+      left: ${triggerRect.left}px;
+      top: ${triggerRect.top + triggerRect.height}px;
     `
-    this.detectCollisionWithViewportEdges(popover)
+    PageLayoutHelper.detectCollisionWithViewportEdges(popover, 10)
+    this.moveArrowPosition(triggerRect, popover)
   }
 
   static showPopover<TPopover extends typeof Popover>(trigger: HTMLElement, params: Parameters<TPopover>): void {
@@ -50,7 +45,7 @@ export class PopoverManager {
     this.popoverElement?.classList.remove("STATE-show")
   }
 
-  static hidePopoverOnMouseEvent(trigger: HTMLElement, e: MouseEvent): void {
+  static hidePopoverOnMouseEvent(trigger: HTMLElement, e: MouseEvent, delay?: number): void {
     const relatedTarget = e.relatedTarget
     if (
       this.popoverElement &&
@@ -59,23 +54,29 @@ export class PopoverManager {
       !trigger.contains(relatedTarget) &&
       !this.popoverElement.contains(relatedTarget)
     ) {
-      this.popoverElement.classList.remove("STATE-show")
+      if (delay && delay > 0) {
+        setTimeout(() => {
+          this.popoverElement?.classList.remove("STATE-show")
+        }, delay)
+      } else {
+        this.popoverElement.classList.remove("STATE-show")
+      }
     }
   }
 
-  static bindHideEventToPopover(): void {
+  static bindHideEventToPopover(delay?: number): void {
     if (!this.popoverElement) return
     if (this.popoverElement["__hasMouseLeaveEvent_popover"]) return
     this.popoverElement.addEventListener("mouseleave", (e) => {
-      if (this.popoverElement) this.hidePopoverOnMouseEvent(this.popoverElement, e)
+      if (this.popoverElement) this.hidePopoverOnMouseEvent(this.popoverElement, e, delay)
     })
     this.popoverElement["__hasMouseLeaveEvent_popover"] = true
   }
 
-  static bindHideEventToTrigger(trigger: HTMLElement): void {
+  static bindHideEventToTrigger(trigger: HTMLElement, delay?: number): void {
     if (trigger["__hasMouseLeaveEvent_popover"]) return
     trigger.addEventListener("mouseleave", (e) => {
-      this.hidePopoverOnMouseEvent(trigger, e)
+      this.hidePopoverOnMouseEvent(trigger, e, delay)
     })
     trigger["__hasMouseLeaveEvent_popover"] = true
   }

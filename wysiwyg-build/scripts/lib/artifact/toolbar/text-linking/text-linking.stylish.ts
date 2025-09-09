@@ -1,10 +1,17 @@
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
 import { editorContent } from "../../content/editor.content"
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
-import { EErrorMessage } from "@/enums/global-enums"
-import { textLinkingManager } from "./text-linking.manager"
+import { EErrorMessage, EInternalEvents } from "@/enums/global-enums"
+import type { TOnSaveLink } from "@/types/api-types"
+import { eventEmitter } from "../../event/event-emitter"
+import { textStylingStylish } from "../text-styling/text-styling.stylish"
 
-type TShowLinkModalHandler = () => void
+type TShowLinkModalHandler = (
+  link: string | null,
+  textOfLink: string | null,
+  textLinkElement: HTMLAnchorElement | null,
+  onSaveLink: TOnSaveLink
+) => void
 
 class TextLinkingStylish {
   private readonly linkTagName: string = "A"
@@ -16,16 +23,18 @@ class TextLinkingStylish {
     return this.linkTagName
   }
 
-  private createTextLinkElement(link: string, innerHTML: string): HTMLElement {
-    const textLinkElement = document.createElement(this.linkTagName)
+  private createTextLinkElement(link: string, innerHTML: string): HTMLAnchorElement {
+    const textLinkElement = document.createElement(this.linkTagName) as HTMLAnchorElement
     textLinkElement.setAttribute("href", link)
-    textLinkElement.innerHTML = innerHTML
     textLinkElement.setAttribute("target", "_blank")
     textLinkElement.setAttribute("rel", "noopener noreferrer")
+    const boldElement = document.createElement(textStylingStylish.getBoldTagNameMostPrioritied())
+    boldElement.innerHTML = innerHTML
+    textLinkElement.replaceChildren(boldElement)
     return textLinkElement
   }
 
-  updateLink(link: string, textOfLink: string | null, textLinkElement: HTMLLinkElement): void {
+  updateLink(link: string, textOfLink: string | null, textLinkElement: HTMLAnchorElement): void {
     textLinkElement.setAttribute("href", link)
     textLinkElement.textContent = textOfLink || link
   }
@@ -33,7 +42,7 @@ class TextLinkingStylish {
   /**
    * Kiểm tra xem caret có nằm trên text link không, dùng được cho cả khi bôi đen và khi ko bôi đen
    */
-  private checkIfIsOnTextLink(selection: Selection): HTMLLinkElement | null {
+  private checkIfIsOnTextLink(selection: Selection): HTMLAnchorElement | null {
     let anchorNode = selection.anchorNode
     if (anchorNode && anchorNode.nodeType === Node.TEXT_NODE) {
       anchorNode = anchorNode.parentElement
@@ -42,17 +51,24 @@ class TextLinkingStylish {
       throw EditorInternalErrorHelper.createError(EErrorMessage.ANCHOR_NODE_NOT_FOUND_OR_NOT_ELEMENT)
     }
     if (anchorNode.tagName === this.linkTagName) {
-      return anchorNode as HTMLLinkElement
+      return anchorNode as HTMLAnchorElement
     }
-    return CodeVCNEditorHelper.getClosestElementOfNode<HTMLLinkElement>(
+    return CodeVCNEditorHelper.getClosestElementOfNode<HTMLAnchorElement>(
       anchorNode,
       (element) => element.tagName === this.linkTagName
     )
   }
 
+  private removeOverlapChildTags(textLinkElement: HTMLAnchorElement): void {
+    CodeVCNEditorHelper.removeOverlapChildTags(textLinkElement, [this.linkTagName])
+  }
+
   private insertNewLinkToCurrentCaret(link: string, textOfLink: string, selection: Selection): void {
     const range = selection.getRangeAt(0)
-    range.insertNode(this.createTextLinkElement(link, textOfLink))
+    const textLinkElement = this.createTextLinkElement(link, textOfLink)
+    this.removeOverlapChildTags(textLinkElement)
+    eventEmitter.emit(EInternalEvents.BIND_TEXT_LINK_POPOVER_EVENT, textLinkElement)
+    range.insertNode(textLinkElement)
   }
 
   private saveCurrentCaretPosition(selection: Selection): void {
@@ -71,39 +87,58 @@ class TextLinkingStylish {
     return null
   }
 
+  private showModalToUpdateLink(textLinkElement: HTMLAnchorElement, showLinkModalHandler: TShowLinkModalHandler): void {
+    showLinkModalHandler(
+      textLinkElement.getAttribute("href"),
+      textLinkElement.textContent,
+      textLinkElement,
+      (link, textOfLink) => {
+        if (link) {
+          const trimmedLink = link.trim()
+          if (trimmedLink.length > 0) {
+            this.updateLink(trimmedLink, textOfLink, textLinkElement)
+          }
+        }
+      }
+    )
+  }
+
+  private showModalToMakeNewLink(
+    showLinkModalHandler: TShowLinkModalHandler,
+    selection: Selection,
+    type: "insert" | "wrap"
+  ): void {
+    const textOfLink = type === "insert" ? null : selection.getRangeAt(0).extractContents().textContent
+    showLinkModalHandler(null, textOfLink, null, (link, textOfLink) => {
+      if (link) {
+        const trimmedLink = link.trim()
+        if (trimmedLink.length > 0) {
+          const selection = this.restoreCaretPosition()
+          if (selection) {
+            this.insertNewLinkToCurrentCaret(trimmedLink, textOfLink || trimmedLink, selection)
+          }
+        }
+      }
+    })
+  }
+
   private makeLinking(showLinkModalHandler: TShowLinkModalHandler): void {
     const selection = editorContent.checkIsFocusingInEditorContent()
     if (!selection) return
     this.saveCurrentCaretPosition(selection)
     if (CodeVCNEditorHelper.isSelectingText()) {
+      const textLinkElement = this.checkIfIsOnTextLink(selection)
+      if (textLinkElement) {
+        this.showModalToUpdateLink(textLinkElement, showLinkModalHandler)
+      } else {
+        this.showModalToMakeNewLink(showLinkModalHandler, selection, "wrap")
+      }
     } else {
       const textLinkElement = this.checkIfIsOnTextLink(selection)
       if (textLinkElement) {
-        textLinkingManager.showModalOnAction(
-          textLinkElement.getAttribute("href"),
-          textLinkElement.textContent,
-          textLinkElement,
-          (link, textOfLink) => {
-            if (link) {
-              const trimmedLink = link.trim()
-              if (trimmedLink.length > 0) {
-                this.updateLink(trimmedLink, textOfLink, textLinkElement)
-              }
-            }
-          }
-        )
+        this.showModalToUpdateLink(textLinkElement, showLinkModalHandler)
       } else {
-        textLinkingManager.showModalOnAction(null, null, null, (link, textOfLink) => {
-          if (link) {
-            const trimmedLink = link.trim()
-            if (trimmedLink.length > 0) {
-              const selection = this.restoreCaretPosition()
-              if (selection) {
-                this.insertNewLinkToCurrentCaret(trimmedLink, textOfLink || trimmedLink, selection)
-              }
-            }
-          }
-        })
+        this.showModalToMakeNewLink(showLinkModalHandler, selection, "insert")
       }
     }
   }

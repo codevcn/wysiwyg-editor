@@ -63,3 +63,7 @@ export enum ENotifyType {
   WARNING = "warning",
   INFO = "info",
 }
+
+export enum EInternalEvents {
+  BIND_TEXT_LINK_POPOVER_EVENT = "bind-text-link-popover-event",
+}

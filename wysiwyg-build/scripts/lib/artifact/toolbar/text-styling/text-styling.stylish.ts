@@ -21,6 +21,10 @@ class TextStylingStylish {
 
   constructor() {}
 
+  getBoldTagNameMostPrioritied(): string {
+    return this.tagNamesForStyling[ETextStylingType.BOLD][0]
+  }
+
   private getAllAvailableTagNames(): string[] {
     return Object.values(this.tagNamesForStyling).flat()
   }
@@ -135,7 +139,7 @@ class TextStylingStylish {
     return element
   }
 
-  private findDescendantsSameTag(parent: HTMLElement): HTMLElement[] {
+  private findDescendantsSameTag(parent: HTMLElement): string[] {
     const tagName = parent.tagName
     // liệt kê tất cả các tagName cùng loại với tagName của parent
     const descendantTagNames: string[] = []
@@ -145,15 +149,11 @@ class TextStylingStylish {
         descendantTagNames.push(...tagNames)
       }
     }
-    // tìm tất cả các phần tử có tagName cùng loại với tagName của parent
-    return Array.from(parent.querySelectorAll(descendantTagNames.join(",")))
+    return descendantTagNames
   }
 
   private removeOverlapChildTags(parentStylingElement: HTMLElement): void {
-    const descendants = this.findDescendantsSameTag(parentStylingElement)
-    for (const descendant of descendants) {
-      descendant.replaceWith(...descendant.childNodes)
-    }
+    CodeVCNEditorHelper.removeOverlapChildTags(parentStylingElement, this.findDescendantsSameTag(parentStylingElement))
   }
 
   /**
