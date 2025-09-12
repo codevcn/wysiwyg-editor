@@ -1,4 +1,5 @@
 import { codevcnEditor } from "./lib/artifact/codevcn-editor.js"
+import "./outsiders/codemirror/configs.js"
 
 const init = () => {
   codevcnEditor.setContent(`

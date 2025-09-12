@@ -23,9 +23,7 @@ export const Modal = ({ body, title, footer }: ModalProps): TemplateResult<1> =>
           </button>
         </div>
         <div class="NAME-modal-body flex flex-col grow overflow-y-auto h-fit">${body}</div>
-        ${footer
-          ? html`<div class="NAME-modal-footer w-full border-t border-gray-200 py-2 px-4 bg-white">${footer}</div>`
-          : ""}
+        <div class="NAME-modal-footer w-full border-t border-gray-200 py-2 px-4 bg-white">${footer}</div>
       </div>
     </div>
   `

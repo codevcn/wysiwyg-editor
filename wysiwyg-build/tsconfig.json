@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es6",
-    "module": "es6",
+    "module": "esnext",
     "rootDir": "./scripts",
     "strict": true,
     "moduleResolution": "node",

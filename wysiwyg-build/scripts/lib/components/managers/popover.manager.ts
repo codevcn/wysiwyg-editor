@@ -6,15 +6,11 @@ import { PageLayoutHelper } from "@/helpers/page-layout-helper"
 export class PopoverManager {
   private static popoverElement: HTMLElement | null = null
 
-  private static moveArrowPosition(triggerRect: DOMRect, popover: HTMLElement): void {
+  private static moveArrowPosition(popover: HTMLElement): void {
     const arrowElement = popover.querySelector<HTMLElement>(".NAME-popover-arrow")
     if (arrowElement) {
       arrowElement.style.cssText += `
-        left: ${
-          triggerRect.width / 2 -
-          arrowElement.offsetWidth / 2 +
-          (triggerRect.left - popover.getBoundingClientRect().left)
-        }px;
+        left: 10px;
       `
     }
   }
@@ -26,7 +22,7 @@ export class PopoverManager {
       top: ${triggerRect.top + triggerRect.height}px;
     `
     PageLayoutHelper.detectCollisionWithViewportEdges(popover, 10)
-    this.moveArrowPosition(triggerRect, popover)
+    this.moveArrowPosition(popover)
   }
 
   static showPopover<TPopover extends typeof Popover>(trigger: HTMLElement, params: Parameters<TPopover>): void {
@@ -45,7 +41,7 @@ export class PopoverManager {
     this.popoverElement?.classList.remove("STATE-show")
   }
 
-  static hidePopoverOnMouseEvent(trigger: HTMLElement, e: MouseEvent, delay?: number): void {
+  private static hidePopoverOnMouseEvent(trigger: HTMLElement, e: MouseEvent, delay?: number): void {
     const relatedTarget = e.relatedTarget
     if (
       this.popoverElement &&
@@ -64,21 +60,17 @@ export class PopoverManager {
     }
   }
 
-  static bindHideEventToPopover(delay?: number): void {
+  static bindHideEventToPopover(trigger: HTMLElement, delay?: number): void {
     if (!this.popoverElement) return
-    if (this.popoverElement["__hasMouseLeaveEvent_popover"]) return
-    this.popoverElement.addEventListener("mouseleave", (e) => {
-      if (this.popoverElement) this.hidePopoverOnMouseEvent(this.popoverElement, e, delay)
-    })
-    this.popoverElement["__hasMouseLeaveEvent_popover"] = true
+    this.popoverElement.onmouseleave = (e) => {
+      this.hidePopoverOnMouseEvent(trigger, e, delay)
+    }
   }
 
   static bindHideEventToTrigger(trigger: HTMLElement, delay?: number): void {
-    if (trigger["__hasMouseLeaveEvent_popover"]) return
-    trigger.addEventListener("mouseleave", (e) => {
+    trigger.onmouseleave = (e) => {
       this.hidePopoverOnMouseEvent(trigger, e, delay)
-    })
-    trigger["__hasMouseLeaveEvent_popover"] = true
+    }
   }
 
   static getPopoverElement(): HTMLElement | null {

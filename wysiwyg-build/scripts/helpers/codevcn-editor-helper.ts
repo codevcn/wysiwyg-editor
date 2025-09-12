@@ -8,9 +8,17 @@ type TIsEmptyTopBlockResult = {
 
 export class CodeVCNEditorHelper {
   static readonly topBlockElementTagName: string = "SECTION"
+  private static savedCaretPosition: Range | null = null
 
   constructor() {}
 
+  static getSavedCaretPosition(): Range | null {
+    return this.savedCaretPosition
+  }
+
+  /**
+   * Kiểm tra xem top block hiện tại có rỗng không, rỗng là khi innerHTML === "" hoặc innerHTML === "<br>"
+   */
   static isEmptyTopBlock(selection: Selection): TIsEmptyTopBlockResult {
     const topBlockElement = this.getTopBlockElementFromSelection(selection)
     if (topBlockElement) {
@@ -127,20 +135,16 @@ export class CodeVCNEditorHelper {
     const contentElement = editorContent.getContentElement()
 
     const range = document.createRange()
-    const lastChild = contentElement.lastChild
+    const lastElementChild = contentElement.lastElementChild
 
-    if (lastChild) {
-      if (lastChild.nodeType === Node.TEXT_NODE) {
-        // caret ở cuối text node
-        range.setStart(lastChild, lastChild.textContent?.length || 0)
-        range.setEnd(lastChild, lastChild.textContent?.length || 0)
-      } else {
-        // nếu ko phải text node thì caret ở cuối content của node element
-        range.selectNodeContents(lastChild)
-      }
-    } else {
+    if (lastElementChild) {
+      // nếu ko phải text node thì caret ở cuối content của node element
+      range.selectNodeContents(lastElementChild)
+      range.collapse(false)
+    } else if (contentElement.innerHTML === "") {
       // nếu rỗng thì collapse trong content element
-      range.selectNodeContents(contentElement)
+      const newBlockElement = this.insertNewTopBlockElement()
+      range.selectNodeContents(newBlockElement)
       range.collapse(false)
     }
 
@@ -221,12 +225,16 @@ export class CodeVCNEditorHelper {
   }
 
   /**
-   * Chia element thành 2 phần (before và after), sau đó focus caret vào element sau (element after)
+   * Chia element thành 2 phần (before và after), sau đó focus caret vào element sau (element after), nếu caretAtMiddle là true thì focus caret vào element giữa (element middle)
    * @param element html element
    * @param selection selection
-   * @returns 2 element mới (before và after)
+   * @returns 2 element mới (before và after) hoặc 3 element mới (before, middle và after)
    */
-  static splitElementInHalfAtCaret(element: HTMLElement, selection: Selection): HTMLElement[] {
+  static splitElementInHalfAtCaret(
+    element: HTMLElement,
+    selection: Selection,
+    caretAtMiddle: boolean = false
+  ): HTMLElement[] {
     const range = selection.getRangeAt(0)
 
     // Đoạn trước caret
@@ -258,13 +266,30 @@ export class CodeVCNEditorHelper {
       }
     }
 
+    const newElements: HTMLElement[] = [beforeElement, afterElement]
+    if (caretAtMiddle) {
+      const middleElement = document.createElement(element.tagName)
+      middleElement.innerHTML = "<br>"
+      newElements[1] = middleElement
+      newElements[2] = afterElement
+    }
+
     // Thay thế element cũ bằng 2 element mới
-    element.replaceWith(beforeElement, afterElement)
+    element.replaceWith(...newElements)
 
-    // Focus caret trong element mới (element after)
-    this.moveCaretToStartOfElement(afterElement, selection, document.createRange())
+    // Focus caret trong element mới (element after or middle)
+    this.moveCaretToStartOfElement(newElements[1], selection, document.createRange())
 
-    return [beforeElement, afterElement]
+    return newElements
+  }
+
+  static splitCurrentTopBlockElementAtCaret(selection: Selection, caretAtMiddle: boolean = false): HTMLElement[] {
+    const currentTopBlockElement = this.getTopBlockElementFromSelection(selection)
+    console.log(">>> currentTopBlockElement:", currentTopBlockElement)
+    if (currentTopBlockElement) {
+      return this.splitElementInHalfAtCaret(currentTopBlockElement, selection, caretAtMiddle)
+    }
+    return []
   }
 
   static isSelectingText(): boolean {
@@ -277,6 +302,51 @@ export class CodeVCNEditorHelper {
     for (const descendant of descendants) {
       descendant.replaceWith(...descendant.childNodes)
     }
+  }
+
+  static saveCurrentCaretPosition(selection?: Selection): void {
+    this.savedCaretPosition = selection ? selection.getRangeAt(0) : window.getSelection()?.getRangeAt(0) || null
+  }
+
+  static restoreCaretPosition(): Selection | null {
+    if (this.savedCaretPosition) {
+      const selection = window.getSelection()
+      if (selection) {
+        selection.removeAllRanges()
+        selection.addRange(this.savedCaretPosition)
+        return selection
+      }
+    }
+    return null
+  }
+
+  static insertElementAtCaret(element: HTMLElement, selection: Selection): HTMLElement | null {
+    const caretElement = this.getElementAtCaretPosition(selection)
+    if (caretElement) {
+      caretElement.insertAdjacentElement("afterend", element)
+      return caretElement
+    }
+    return null
+  }
+
+  /**
+   * Lấy element tại vị trí con trỏ caret hiện tại
+   * @param selection Selection object từ window.getSelection()
+   * @returns HTMLElement tại vị trí caret hoặc null nếu không tìm thấy
+   */
+  static getElementAtCaretPosition(selection: Selection): HTMLElement | null {
+    const range = selection.getRangeAt(0)
+    const container = range.commonAncestorContainer
+
+    if (container.nodeType === Node.TEXT_NODE) {
+      // Nếu container là text node, lấy parent element
+      return container.parentElement as HTMLElement
+    } else if (container.nodeType === Node.ELEMENT_NODE) {
+      // Nếu container là element node
+      return container as HTMLElement
+    }
+
+    return null
   }
 
   static notify(type: ENotifyType, message: string) {

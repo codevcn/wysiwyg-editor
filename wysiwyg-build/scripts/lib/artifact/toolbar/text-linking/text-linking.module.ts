@@ -12,7 +12,7 @@ class TextLinkingModule {
   private actions: TToolbarAction[] = [
     {
       action: EToolbarAction.TEXT_LINKING,
-      label: `<i class="bi bi-link-45deg font-bold text-xl"></i>`,
+      label: `<i class="bi bi-link-45deg text-xl"></i>`,
       type: "button",
     },
   ]

@@ -31,6 +31,10 @@ export enum ETextLinkingType {
   TEXT_LINKING = "text-linking",
 }
 
+export enum ECodeBlockingType {
+  CODE_BLOCKING = "code-blocking",
+}
+
 export enum EToolbarAction {
   BOLD = "text-styling-bold",
   ITALIC = "text-styling-italic",
@@ -42,6 +46,7 @@ export enum EToolbarAction {
   BLOCKQUOTE = "text-blocking-blockquote",
   IMAGE_BLOCKING = "image-blocking",
   TEXT_LINKING = "text-linking",
+  CODE_BLOCKING = "code-blocking",
 }
 
 export enum EErrorMessage {
@@ -55,6 +60,8 @@ export enum EErrorMessage {
   ONLY_SUPPORT_IMAGE_FILE = "Only support image file",
   TOP_BLOCK_NOT_FOUND = "Top block element not found",
   TEXT_LINK_FORM_NOT_FOUND = "Text link form not found",
+  INSERT_CODE_BLOCK_SKELETON_FAILED = "Insert code block skeleton failed",
+  LOADED_CODE_BLOCK_MODULES_NOT_FOUND = "Loaded code block modules not found",
 }
 
 export enum ENotifyType {
@@ -66,4 +73,10 @@ export enum ENotifyType {
 
 export enum EInternalEvents {
   BIND_TEXT_LINK_POPOVER_EVENT = "bind-text-link-popover-event",
+}
+
+export enum ECodeBlockingLanguage {
+  JAVASCRIPT = "javascript",
+  CPP = "cpp",
+  PYTHON = "python",
 }

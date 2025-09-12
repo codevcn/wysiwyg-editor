@@ -47,7 +47,10 @@ class TextLinkingManager {
     clearTimeout(this.debounceTimer)
     this.debounceTimer = setTimeout(() => {
       this.linkTyping = inputElement.value
-      this.textLinkForm?.querySelector(".NAME-text-of-link")?.setAttribute("value", this.linkTyping)
+      const textOfLinkInput = this.textLinkForm?.querySelector<HTMLInputElement>(".NAME-text-of-link")
+      if (textOfLinkInput && !textOfLinkInput.value) {
+        textOfLinkInput.setAttribute("value", this.linkTyping)
+      }
     }, 300)
   }
 
@@ -205,6 +208,8 @@ class TextLinkingManager {
         </div>`,
       },
     ])
+    PopoverManager.bindHideEventToTrigger(textLinkElement, 300)
+    PopoverManager.bindHideEventToPopover(textLinkElement, 300)
   }
 
   setupTextLinkElementToShowPopover(textLinkElement: HTMLAnchorElement): void {
@@ -214,8 +219,6 @@ class TextLinkingManager {
       this.currentTextLinkElement = textLinkElement
       this.showTextLinkPopover()
     })
-    PopoverManager.bindHideEventToTrigger(textLinkElement, 300)
-    PopoverManager.bindHideEventToPopover(300)
   }
 
   private showPopoverWithLinkInfo(link: string, textLinkElement: HTMLAnchorElement): void {

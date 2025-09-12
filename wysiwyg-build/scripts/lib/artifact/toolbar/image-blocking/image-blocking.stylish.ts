@@ -39,11 +39,7 @@ class ImageBlockingStylish {
     { imgUrl, altText, height, width }: TImageProperties,
     skeletonReplacer?: TImageSkeletonReplacer
   ): void {
-    let selection = editorContent.checkIsFocusingInEditorContent()
-    if (!selection) {
-      CodeVCNEditorHelper.focusCaretAtEndOfEditorContent()
-    }
-    selection = editorContent.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorHelper.restoreCaretPosition()
     if (!selection) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.SELECTION_NOT_FOUND)
     }
@@ -51,6 +47,7 @@ class ImageBlockingStylish {
       skeletonReplacer(this.createImageElement({ imgUrl, altText, height, width }))
       return
     }
+    CodeVCNEditorHelper.splitCurrentTopBlockElementAtCaret(selection, true)
     const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
     if (topBlockElement) {
       if (isEmpty) {
@@ -81,14 +78,11 @@ class ImageBlockingStylish {
   }
 
   renderImageSkeleton(height: number, width: number): TImageSkeletonReplacer {
-    let selection = editorContent.checkIsFocusingInEditorContent()
-    if (!selection) {
-      CodeVCNEditorHelper.focusCaretAtEndOfEditorContent()
-    }
-    selection = editorContent.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorHelper.restoreCaretPosition()
     if (!selection) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.SELECTION_NOT_FOUND)
     }
+    CodeVCNEditorHelper.splitCurrentTopBlockElementAtCaret(selection, true)
     const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
     if (!topBlockElement) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.TOP_BLOCK_NOT_FOUND)

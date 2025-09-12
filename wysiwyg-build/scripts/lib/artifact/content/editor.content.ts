@@ -12,9 +12,15 @@ class EditorContent {
 
   constructor() {
     this.contentElement = this.createContentElement()
-    this.initEventListeners()
+    this.setupContentArea()
+  }
+
+  private setupContentArea(): void {
     this.bindContentEventListeners()
     this.bindSelectionChangeEventListener()
+    this.bindKeydownEventListener()
+    this.bindBeforeInputEventListener()
+    this.bindPasteEventListener()
   }
 
   private bindContentEventListeners(): void {
@@ -25,7 +31,10 @@ class EditorContent {
 
   private bindSelectionChangeEventListener(): void {
     document.addEventListener("selectionchange", () => {
-      textLinkingManager.showModalOnCaretMoves()
+      CodeVCNEditorHelper.saveCurrentCaretPosition()
+      queueMicrotask(() => {
+        textLinkingManager.showModalOnCaretMoves()
+      })
     })
   }
 
@@ -57,13 +66,9 @@ class EditorContent {
   private makeNewLine(): void {
     const selection = this.checkIsFocusingInEditorContent()
     if (!selection) return
-    const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
+    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
     if (topBlockElement) {
-      if (isEmpty) {
-        CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
-      } else {
-        CodeVCNEditorHelper.splitElementInHalfAtCaret(topBlockElement, selection)
-      }
+      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
     } else {
       this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
     }
@@ -87,12 +92,6 @@ class EditorContent {
         addImageModalManager.onPasteImage(e)
       })
     })
-  }
-
-  private initEventListeners(): void {
-    this.bindKeydownEventListener()
-    this.bindBeforeInputEventListener()
-    this.bindPasteEventListener()
   }
 
   getContentElement(): HTMLElement {

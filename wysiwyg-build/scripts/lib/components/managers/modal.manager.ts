@@ -12,12 +12,16 @@ export class ModalManager {
     modalElement.querySelector(".NAME-modal-body")!.replaceChildren(LitHTMLHelper.createFromRenderer(() => body, []))
     if (title) {
       modalElement.querySelector(".NAME-modal-title")!.textContent = title
+    } else {
+      modalElement.querySelector(".NAME-modal-title")!.remove()
     }
     if (footer) {
       const modalFooterElement = modalElement.querySelector(".NAME-modal-footer")
       if (modalFooterElement) {
         modalFooterElement.replaceChildren(LitHTMLHelper.createFromRenderer(() => footer, []))
       }
+    } else {
+      modalElement.querySelector(".NAME-modal-footer")!.remove()
     }
     modalElement.classList.add("STATE-show")
   }

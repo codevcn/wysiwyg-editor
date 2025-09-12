@@ -29,4 +29,6 @@ export type TImageDimensions = {
   height: number
 }
 
+export type TSkeletonReplacer = (skeletonElement: HTMLElement) => void
+
 export type TImageSkeletonReplacer = (imageElement: HTMLImageElement) => void

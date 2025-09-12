@@ -6,6 +6,8 @@ import type { TOnSaveLink } from "@/types/api-types"
 import { eventEmitter } from "../../event/event-emitter"
 import { textStylingStylish } from "../text-styling/text-styling.stylish"
 
+type TInsertType = "insert-new" | "wrap-existing"
+
 type TShowLinkModalHandler = (
   link: string | null,
   textOfLink: string | null,
@@ -15,7 +17,6 @@ type TShowLinkModalHandler = (
 
 class TextLinkingStylish {
   private readonly linkTagName: string = "A"
-  private savedRange: Range | null = null
 
   constructor() {}
 
@@ -59,32 +60,14 @@ class TextLinkingStylish {
     )
   }
 
-  private removeOverlapChildTags(textLinkElement: HTMLAnchorElement): void {
-    CodeVCNEditorHelper.removeOverlapChildTags(textLinkElement, [this.linkTagName])
-  }
-
-  private insertNewLinkToCurrentCaret(link: string, textOfLink: string, selection: Selection): void {
+  private insertNewLinkToCurrentCaret(link: string, textOfLink: string, selection: Selection, type: TInsertType): void {
     const range = selection.getRangeAt(0)
     const textLinkElement = this.createTextLinkElement(link, textOfLink)
-    this.removeOverlapChildTags(textLinkElement)
+    if (type === "wrap-existing") {
+      range.deleteContents()
+    }
     eventEmitter.emit(EInternalEvents.BIND_TEXT_LINK_POPOVER_EVENT, textLinkElement)
     range.insertNode(textLinkElement)
-  }
-
-  private saveCurrentCaretPosition(selection: Selection): void {
-    this.savedRange = selection.getRangeAt(0)
-  }
-
-  private restoreCaretPosition(): Selection | null {
-    if (this.savedRange) {
-      const selection = window.getSelection()
-      if (selection) {
-        selection.removeAllRanges()
-        selection.addRange(this.savedRange)
-        return selection
-      }
-    }
-    return null
   }
 
   private showModalToUpdateLink(textLinkElement: HTMLAnchorElement, showLinkModalHandler: TShowLinkModalHandler): void {
@@ -106,39 +89,43 @@ class TextLinkingStylish {
   private showModalToMakeNewLink(
     showLinkModalHandler: TShowLinkModalHandler,
     selection: Selection,
-    type: "insert" | "wrap"
+    type: TInsertType
   ): void {
-    const textOfLink = type === "insert" ? null : selection.getRangeAt(0).extractContents().textContent
-    showLinkModalHandler(null, textOfLink, null, (link, textOfLink) => {
-      if (link) {
-        const trimmedLink = link.trim()
-        if (trimmedLink.length > 0) {
-          const selection = this.restoreCaretPosition()
-          if (selection) {
-            this.insertNewLinkToCurrentCaret(trimmedLink, textOfLink || trimmedLink, selection)
+    showLinkModalHandler(
+      null,
+      type === "insert-new" ? null : selection.getRangeAt(0).cloneContents().textContent,
+      null,
+      (link, textOfLink) => {
+        if (link) {
+          const trimmedLink = link.trim()
+          if (trimmedLink.length > 0) {
+            const selection = CodeVCNEditorHelper.restoreCaretPosition()
+            if (selection) {
+              this.insertNewLinkToCurrentCaret(trimmedLink, textOfLink || trimmedLink, selection, type)
+            }
           }
         }
       }
-    })
+    )
   }
 
   private makeLinking(showLinkModalHandler: TShowLinkModalHandler): void {
     const selection = editorContent.checkIsFocusingInEditorContent()
     if (!selection) return
-    this.saveCurrentCaretPosition(selection)
+    CodeVCNEditorHelper.saveCurrentCaretPosition(selection)
     if (CodeVCNEditorHelper.isSelectingText()) {
       const textLinkElement = this.checkIfIsOnTextLink(selection)
       if (textLinkElement) {
         this.showModalToUpdateLink(textLinkElement, showLinkModalHandler)
       } else {
-        this.showModalToMakeNewLink(showLinkModalHandler, selection, "wrap")
+        this.showModalToMakeNewLink(showLinkModalHandler, selection, "wrap-existing")
       }
     } else {
       const textLinkElement = this.checkIfIsOnTextLink(selection)
       if (textLinkElement) {
         this.showModalToUpdateLink(textLinkElement, showLinkModalHandler)
       } else {
-        this.showModalToMakeNewLink(showLinkModalHandler, selection, "insert")
+        this.showModalToMakeNewLink(showLinkModalHandler, selection, "insert-new")
       }
     }
   }
