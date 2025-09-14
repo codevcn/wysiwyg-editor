@@ -5,7 +5,7 @@ import { blockquoteStylish } from "../toolbar/text-blocking/blockquote/blockquot
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { addImageModalManager } from "../toolbar/image-blocking/add-image.manager.js"
 import { textLinkingManager } from "../toolbar/text-linking/text-linking.manager.js"
-import { codeBlockingManager } from "../toolbar/code-blocking/code-blocking.manager.js"
+import { codeBlockingStylish } from "../toolbar/code-blocking/code-blocking.stylish.js"
 
 class EditorContent {
   private contentElement: HTMLElement
@@ -26,7 +26,7 @@ class EditorContent {
 
   private isEventAllowed(e: Event): boolean {
     const target = e.target
-    if (target instanceof HTMLElement && target.closest(`.${codeBlockingManager.getCodeBlockBoxClassName()}`)) {
+    if (target instanceof HTMLElement && target.closest(`.${codeBlockingStylish.getCodeBlockBoxClassName()}`)) {
       return false
     }
     return true

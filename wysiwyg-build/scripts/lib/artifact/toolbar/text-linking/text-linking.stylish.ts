@@ -113,7 +113,7 @@ class TextLinkingStylish {
     const selection = editorContent.checkIsFocusingInEditorContent()
     if (!selection) return
     CodeVCNEditorHelper.saveCurrentCaretPosition(selection)
-    if (CodeVCNEditorHelper.isSelectingText()) {
+    if (CodeVCNEditorHelper.isSelectingContent()) {
       const textLinkElement = this.checkIfIsOnTextLink(selection)
       if (textLinkElement) {
         this.showModalToUpdateLink(textLinkElement, showLinkModalHandler)

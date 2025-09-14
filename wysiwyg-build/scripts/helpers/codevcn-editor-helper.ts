@@ -1,6 +1,5 @@
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
 import { ENotifyType } from "@/enums/global-enums"
-import { testPerformance } from "@/dev/helpers"
 
 type TIsEmptyTopBlockResult = {
   topBlockElement: HTMLElement | null
@@ -341,9 +340,10 @@ export class CodeVCNEditorHelper {
     return []
   }
 
-  static isSelectingText(): boolean {
+  static isSelectingContent(): Selection | null {
     const selection = window.getSelection()
-    return !!selection && !selection.isCollapsed
+    if (!selection || selection.isCollapsed) return null
+    return selection
   }
 
   static removeOverlapChildTags(parent: HTMLElement, descendantTagNames: string[]): void {

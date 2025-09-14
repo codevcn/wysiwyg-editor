@@ -1,6 +1,6 @@
-import { ECodeBlockingType, EToolbarAction } from "@/enums/global-enums"
+import { ECodeBlockingType, EToolbarAction } from "@/enums/global-enums.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
-import { TToolbarAction } from "@/types/global-types"
+import { TToolbarAction } from "@/types/global-types.js"
 import { html } from "lit-html"
 import { repeat } from "lit-html/directives/repeat.js"
 import { unsafeHTML } from "lit-html/directives/unsafe-html.js"

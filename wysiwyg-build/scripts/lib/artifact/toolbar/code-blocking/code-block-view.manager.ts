@@ -1,6 +1,6 @@
-import type { TSkeletonReplacer } from "@/types/global-types"
-import { capitalizeWord, LitHTMLHelper } from "@/helpers/common-helpers"
-import { Skeleton } from "@/lib/components/skeleton"
+import type { TSkeletonReplacer } from "@/types/global-types.js"
+import { capitalizeWord, LitHTMLHelper } from "@/helpers/common-helpers.js"
+import { Skeleton } from "@/lib/components/skeleton.js"
 import type { Extension } from "@codemirror/state"
 import { Compartment, EditorState } from "@codemirror/state"
 import {
@@ -25,12 +25,12 @@ import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode"
 import { javascript } from "@codemirror/lang-javascript"
 import { python } from "@codemirror/lang-python"
 import { cpp } from "@codemirror/lang-cpp"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
-import { EditorInternalErrorHelper } from "@/helpers/error-helper"
-import { ECodeBlockingLanguage, EErrorMessage } from "@/enums/global-enums"
+import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { EditorInternalErrorHelper } from "@/helpers/error-helper.js"
+import { ECodeBlockingLanguage, EErrorMessage } from "@/enums/global-enums.js"
 import { html } from "lit-html"
-import { DropdownManager } from "@/lib/components/managers/dropdown.manager"
-import { codeBlockingManager } from "./code-blocking.manager"
+import { DropdownManager } from "@/lib/components/managers/dropdown.manager.js"
+import { codeBlockingStylish } from "./code-blocking.stylish.js"
 
 type TCodeBlockView = EditorView
 
@@ -243,22 +243,22 @@ export class CodeBlockViewManager {
     const cursorPos = state.selection.main.head
     const currentLine = stateDoc.lineAt(cursorPos).number
     if (direction === "up" && currentLine === 1) {
-      codeBlockingManager.jumpToPreviousLineFromInsideCodeBlock(view.dom)
+      codeBlockingStylish.jumpToPreviousLineFromInsideCodeBlock(view.dom)
       return true
     } else if (direction === "down" && currentLine === totalLines) {
-      codeBlockingManager.jumpToNewLineFromInsideCodeBlock(view.dom)
+      codeBlockingStylish.jumpToNewLineFromInsideCodeBlock(view.dom)
       return true
     } else {
       const firstLine = stateDoc.line(1) // dòng đầu
       const lastLine = stateDoc.line(totalLines) // dòng cuối
       // Trường hợp 1: con trỏ ở đầu dòng đầu tiên
       if (direction === "left" && cursorPos === firstLine.from) {
-        codeBlockingManager.jumpToPreviousLineFromInsideCodeBlock(view.dom)
+        codeBlockingStylish.jumpToPreviousLineFromInsideCodeBlock(view.dom)
         return true
       }
       // Trường hợp 2: con trỏ ở cuối dòng cuối cùng
       if (direction === "right" && cursorPos === lastLine.to) {
-        codeBlockingManager.jumpToNewLineFromInsideCodeBlock(view.dom)
+        codeBlockingStylish.jumpToNewLineFromInsideCodeBlock(view.dom)
         return true
       }
     }
