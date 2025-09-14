@@ -24,7 +24,7 @@ class EditorToolbar {
   private createToolbarElement(): HTMLElement {
     const Renderer = () =>
       html`<div class="${this.toolbarElementClassName} border-b px-2 py-1 flex gap-2 items-stretch"></div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   getToolbarElement(): HTMLElement {

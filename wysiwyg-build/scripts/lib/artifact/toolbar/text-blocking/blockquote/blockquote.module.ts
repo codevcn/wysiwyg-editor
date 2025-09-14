@@ -13,7 +13,6 @@ class BlockquoteModule {
     {
       action: EToolbarAction.BLOCKQUOTE,
       label: `<i class="bi bi-quote text-xl"></i>`,
-      type: "button",
     },
   ]
 
@@ -37,7 +36,7 @@ class BlockquoteModule {
             </button>`
         )}
       </div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   getSectionElement(): HTMLElement {

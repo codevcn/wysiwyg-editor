@@ -101,42 +101,6 @@
   cursor: pointer;
   color: var(--vcn-text-link-cl);
 }
-.NAME-codevcn-editor .NAME-dropdown {
-  position: relative;
-}
-.NAME-codevcn-editor .NAME-dropdown .NAME-dropdown-content {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
-  transition: clip-path 0.2s ease-in-out;
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background-color: #fff;
-  border-radius: 8px;
-  border: 1px solid var(--vcn-border-gray-cl);
-  z-index: 10;
-  padding: 6px;
-}
-.NAME-codevcn-editor .NAME-dropdown .NAME-dropdown-content .NAME-dropdown-option {
-  display: flex;
-  align-items: center;
-  padding: 2px 6px;
-  line-height: 1.5;
-  width: 100%;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.NAME-codevcn-editor .NAME-dropdown .NAME-dropdown-content .NAME-dropdown-option:hover {
-  background-color: var(--vcn-hover-gray-cl);
-}
-.NAME-codevcn-editor .NAME-dropdown .NAME-dropdown-content .NAME-dropdown-option.active {
-  background-color: var(--vcn-hover-gray-cl);
-}
-.NAME-codevcn-editor .NAME-dropdown[data-open=true] .NAME-dropdown-content {
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
-}
 
 .NAME-add-image-container .NAME-add-image-type-buttons.STATE-upload .NAME-add-image-btn-upload {
   background-color: #ffffff;
@@ -172,6 +136,15 @@
   display: block;
 }
 
+.cm-editor {
+  outline: none;
+  overflow: hidden;
+  border-top: 1px solid var(--vcn-border-gray-cl);
+}
+.cm-editor.cm-focused {
+  outline: none;
+}
+
 .NAME-modal {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
@@ -183,10 +156,25 @@
 }
 
 .NAME-popover {
-  display: none;
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  transition: clip-path 0.2s ease-in-out;
 }
 .NAME-popover.STATE-show {
-  display: flex;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.NAME-dropdown-menu {
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  transition: clip-path 0.2s ease-in-out;
+}
+.NAME-dropdown-menu .NAME-dropdown-option:hover {
+  background-color: var(--vcn-hover-gray-cl);
+}
+.NAME-dropdown-menu .NAME-dropdown-option.active {
+  background-color: var(--vcn-hover-gray-cl);
+}
+.NAME-dropdown-menu.STATE-show {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
 [hidden] {

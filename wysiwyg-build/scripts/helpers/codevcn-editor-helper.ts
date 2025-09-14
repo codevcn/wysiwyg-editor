@@ -1,5 +1,6 @@
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
 import { ENotifyType } from "@/enums/global-enums"
+import { testPerformance } from "@/dev/helpers"
 
 type TIsEmptyTopBlockResult = {
   topBlockElement: HTMLElement | null
@@ -40,7 +41,7 @@ export class CodeVCNEditorHelper {
     }
   }
 
-  static createNewTopBlockElement(): HTMLElement {
+  static createNewEmptyTopBlockElement(): HTMLElement {
     const newBlock = document.createElement("section")
     newBlock.innerHTML = "<br>"
     return newBlock
@@ -93,10 +94,10 @@ export class CodeVCNEditorHelper {
     if (element) {
       // Insert vào sau 1 element
       const topBlockElement = this.getTopBlockElementFromNode(element)!
-      newBlockElement = this.createNewTopBlockElement()
+      newBlockElement = this.createNewEmptyTopBlockElement()
       topBlockElement.insertAdjacentElement("afterend", newBlockElement)
     } else {
-      newBlockElement = this.insertNewTopBlockElement()
+      newBlockElement = this.insertNewEmptyTopBlockElement()
     }
 
     // Đặt caret vào block mới
@@ -121,38 +122,87 @@ export class CodeVCNEditorHelper {
     selection.addRange(selectionRange)
   }
 
+  static getNextTopBlockElementFromCurrentTopBlock(selection: Selection): HTMLElement | null {
+    const currentTopBlockElement = this.getTopBlockElementFromSelection(selection)
+    if (currentTopBlockElement) {
+      let nextElementSibling = currentTopBlockElement.nextElementSibling
+      while (nextElementSibling && nextElementSibling.tagName !== this.topBlockElementTagName) {
+        nextElementSibling = nextElementSibling.nextElementSibling
+      }
+      if (nextElementSibling && nextElementSibling.tagName === this.topBlockElementTagName) {
+        return nextElementSibling as HTMLElement
+      }
+    }
+    return null
+  }
+
+  static moveCaretToStartOfNextTopBlock(selection: Selection): void {
+    const nextTopBlockElement = this.getNextTopBlockElementFromCurrentTopBlock(selection)
+    if (nextTopBlockElement) {
+      this.moveCaretToStartOfElement(nextTopBlockElement, selection, selection.getRangeAt(0))
+    } else {
+      this.moveCaretToStartOfElement(this.insertNewEmptyTopBlockElement(), selection, selection.getRangeAt(0))
+    }
+  }
+
+  static getPreviousTopBlockElementFromCurrentTopBlock(selection: Selection): HTMLElement | null {
+    const currentTopBlockElement = this.getTopBlockElementFromSelection(selection)
+    if (currentTopBlockElement) {
+      let previousElementSibling = currentTopBlockElement.previousElementSibling
+      while (previousElementSibling && previousElementSibling.tagName !== this.topBlockElementTagName) {
+        previousElementSibling = previousElementSibling.previousElementSibling
+      }
+      if (previousElementSibling && previousElementSibling.tagName === this.topBlockElementTagName) {
+        return previousElementSibling as HTMLElement
+      }
+    }
+    return null
+  }
+
+  static moveCaretToPreviousTopBlock(selection: Selection): void {
+    const previousTopBlockElement = this.getPreviousTopBlockElementFromCurrentTopBlock(selection)
+    if (previousTopBlockElement) {
+      this.moveCaretToEndOfElement(previousTopBlockElement, selection, selection.getRangeAt(0))
+    } else {
+      this.moveCaretToStartOfElement(this.insertNewEmptyTopBlockElement(), selection, selection.getRangeAt(0))
+    }
+  }
+
   static findLatestTopBlockElement(): HTMLElement | null {
     return editorContent.getContentElement().lastElementChild as HTMLElement | null
   }
 
-  static insertNewTopBlockElement(): HTMLElement {
-    const newBlockElement = this.createNewTopBlockElement()
+  static insertNewEmptyTopBlockElement(): HTMLElement {
+    const newBlockElement = this.createNewEmptyTopBlockElement()
     editorContent.getContentElement().appendChild(newBlockElement)
     return newBlockElement
   }
 
-  static focusCaretAtEndOfEditorContent(): void {
+  static focusCaretAtEndOfEditorContent(): Selection | null {
     const contentElement = editorContent.getContentElement()
 
     const range = document.createRange()
     const lastElementChild = contentElement.lastElementChild
 
     if (lastElementChild) {
-      // nếu ko phải text node thì caret ở cuối content của node element
+      // nếu editor content có element con cuối cùng thì caret ở cuối element con đó
       range.selectNodeContents(lastElementChild)
       range.collapse(false)
     } else if (contentElement.innerHTML === "") {
       // nếu rỗng thì collapse trong content element
-      const newBlockElement = this.insertNewTopBlockElement()
+      const newBlockElement = this.insertNewEmptyTopBlockElement()
       range.selectNodeContents(newBlockElement)
       range.collapse(false)
     }
 
     const selection = window.getSelection()
-    if (!selection) return
+    if (!selection) return null
+
     contentElement.focus()
     selection.removeAllRanges()
     selection.addRange(range)
+
+    return selection
   }
 
   static removeEmptyElements(...elements: HTMLElement[]): void {
@@ -285,7 +335,6 @@ export class CodeVCNEditorHelper {
 
   static splitCurrentTopBlockElementAtCaret(selection: Selection, caretAtMiddle: boolean = false): HTMLElement[] {
     const currentTopBlockElement = this.getTopBlockElementFromSelection(selection)
-    console.log(">>> currentTopBlockElement:", currentTopBlockElement)
     if (currentTopBlockElement) {
       return this.splitElementInHalfAtCaret(currentTopBlockElement, selection, caretAtMiddle)
     }
@@ -305,7 +354,9 @@ export class CodeVCNEditorHelper {
   }
 
   static saveCurrentCaretPosition(selection?: Selection): void {
-    this.savedCaretPosition = selection ? selection.getRangeAt(0) : window.getSelection()?.getRangeAt(0) || null
+    if (editorContent.checkIsFocusingInEditorContent()) {
+      this.savedCaretPosition = selection ? selection.getRangeAt(0) : window.getSelection()?.getRangeAt(0) || null
+    }
   }
 
   static restoreCaretPosition(): Selection | null {
@@ -320,13 +371,8 @@ export class CodeVCNEditorHelper {
     return null
   }
 
-  static insertElementAtCaret(element: HTMLElement, selection: Selection): HTMLElement | null {
-    const caretElement = this.getElementAtCaretPosition(selection)
-    if (caretElement) {
-      caretElement.insertAdjacentElement("afterend", element)
-      return caretElement
-    }
-    return null
+  static insertElementAtCaret(element: HTMLElement, selection: Selection): void {
+    selection.getRangeAt(0).insertNode(element)
   }
 
   /**

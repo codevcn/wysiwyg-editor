@@ -60,7 +60,7 @@ class ImageBlockingStylish {
   }
 
   private createImageSkeleton(height: number, width: number): HTMLElement {
-    return LitHTMLHelper.createFromRenderer(Skeleton, [{ width, height }])
+    return LitHTMLHelper.createElementFromRenderer(Skeleton, [{ width, height }])
   }
 
   private insertImageSkeleton(

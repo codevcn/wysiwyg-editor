@@ -57,10 +57,10 @@ export enum EErrorMessage {
   INVALID_IMAGE_TYPE = "Invalid image type",
   MAX_IMAGES_COUNT_TOO_LARGE = "Max images count too large",
   SELECTION_NOT_FOUND = "Selection not found in editor content",
+  SELECTION_NOT_FOUND_AFTER_RESTORE = "Selection not found after restore caret position",
   ONLY_SUPPORT_IMAGE_FILE = "Only support image file",
   TOP_BLOCK_NOT_FOUND = "Top block element not found",
   TEXT_LINK_FORM_NOT_FOUND = "Text link form not found",
-  INSERT_CODE_BLOCK_SKELETON_FAILED = "Insert code block skeleton failed",
   LOADED_CODE_BLOCK_MODULES_NOT_FOUND = "Loaded code block modules not found",
 }
 

@@ -13,7 +13,6 @@ class TextLinkingModule {
     {
       action: EToolbarAction.TEXT_LINKING,
       label: `<i class="bi bi-link-45deg text-xl"></i>`,
-      type: "button",
     },
   ]
 
@@ -35,7 +34,7 @@ class TextLinkingModule {
         </button>`
       )}
     </div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   getSectionElement(): HTMLElement {

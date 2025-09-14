@@ -10,9 +10,28 @@
 }
 
 .NAME-popover {
-  display: none;
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  transition: clip-path 0.2s ease-in-out;
 
   &.STATE-show {
-    display: flex;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  }
+}
+
+.NAME-dropdown-menu {
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  transition: clip-path 0.2s ease-in-out;
+
+  .NAME-dropdown-option {
+    &:hover {
+      background-color: var(--vcn-hover-gray-cl);
+    }
+    &.active {
+      background-color: var(--vcn-hover-gray-cl);
+    }
+  }
+
+  &.STATE-show {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
   }
 }

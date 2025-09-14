@@ -13,13 +13,11 @@ class TextListingModule {
     {
       action: EToolbarAction.NUMBERED_LIST,
       label: `<i class="bi bi-list-ol"></i>`,
-      type: "button",
       className: "text-2xl font-bold",
     },
     {
       action: EToolbarAction.BULLET_LIST,
       label: `<i class="bi bi-list-ul"></i>`,
-      type: "button",
       className: "text-2xl font-bold",
     },
   ]
@@ -43,7 +41,7 @@ class TextListingModule {
           </button>`
       )}
     </div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   getSectionElement(): HTMLElement {

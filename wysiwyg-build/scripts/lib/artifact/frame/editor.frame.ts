@@ -16,7 +16,7 @@ class EditorFrame {
         class="${this.frameElementClassName} ${this
           .codevcnEditorClassName} w-full max-w-3xl mx-auto border rounded-lg shadow bg-white"
       ></div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   getFrameElement(): HTMLElement {

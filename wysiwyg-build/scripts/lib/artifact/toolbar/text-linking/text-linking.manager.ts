@@ -5,7 +5,6 @@ import { PopoverManager } from "@/lib/components/managers/popover.manager"
 import { ModalManager } from "@/lib/components/managers/modal.manager"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
 import { EErrorMessage, EInternalEvents } from "@/enums/global-enums"
-import { editorMaterials } from "../../layout/editor.materials"
 import { copyTextToClipboard, isValidUrl } from "@/helpers/common-helpers"
 import type { TOnSaveLink } from "@/types/api-types"
 import { eventEmitter } from "../../event/event-emitter"
@@ -160,7 +159,7 @@ class TextLinkingManager {
         `,
       },
     ])
-    this.textLinkForm = editorMaterials.getModalElement().querySelector(".NAME-text-link-form") as HTMLFormElement
+    this.textLinkForm = ModalManager.getModalElement().querySelector(".NAME-text-link-form") as HTMLFormElement
     this.textLinkForm.querySelector<HTMLInputElement>(".NAME-link-input")?.focus()
   }
 

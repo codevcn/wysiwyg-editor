@@ -5,9 +5,9 @@ import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
 import { textStylingStylish } from "./text-styling.stylish.js"
 import { ETextStylingType, EToolbarAction } from "@/enums/global-enums.js"
 import type { TToolbarAction } from "@/types/global-types.js"
-import { DropDown } from "@/lib/components/dropdown.js"
 import { DropdownManager } from "@/lib/components/managers/dropdown.manager.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
+import { DropdownTrigger } from "@/lib/components/dropdown.js"
 
 class TextStylingModule {
   private sectionElement: HTMLElement
@@ -15,25 +15,21 @@ class TextStylingModule {
     {
       action: EToolbarAction.BOLD,
       label: "B",
-      type: "button",
       className: "font-bold",
     },
     {
       action: EToolbarAction.ITALIC,
       label: "I",
-      type: "button",
       className: "italic font-mono text-lg",
     },
     {
       action: EToolbarAction.UNDERLINE,
       label: "U",
-      type: "button",
       className: "underline",
     },
     {
       action: EToolbarAction.STRIKE_THROUGH,
       label: "S",
-      type: "button",
       className: "line-through",
     },
     {
@@ -52,7 +48,6 @@ class TextStylingModule {
             </g>
           </g>
         </svg>`,
-      type: "select",
       className: "text-2xl font-bold",
       options: [
         {
@@ -94,20 +89,13 @@ class TextStylingModule {
         ${repeat(
           this.actions,
           ({ action }) => action,
-          ({ action, label, type, className, options }) =>
-            type === "select"
-              ? DropDown({
+          ({ action, label, className, options }) =>
+            options
+              ? DropdownTrigger({
+                  action,
                   label,
-                  options: options || [],
-                  dataObject: {
-                    action: action,
-                  },
-                  classNames: {
-                    btn: `flex items-center px-2 py-1 leading-none rounded hover:bg-gray-200 cursor-pointer h-full ${className}`,
-                    options: options?.map(
-                      ({ className }) => `flex gap-2 py-1 px-2 cursor-pointer hover:bg-gray-200 ${className || ""}`
-                    ),
-                  },
+                  classNames: { btn: className },
+                  initialValue: options?.[0]?.value || "",
                 })
               : html`<button
                   class="NAME-toolbar-btn flex items-center px-2 py-1 leading-none rounded hover:bg-gray-200 cursor-pointer ${className}"
@@ -117,7 +105,7 @@ class TextStylingModule {
                 </button>`
         )}
       </div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   private bindButtonEvents() {
@@ -131,13 +119,15 @@ class TextStylingModule {
   }
 
   private bindDropdownEvents() {
-    const dropdowns = this.sectionElement.querySelectorAll<HTMLElement>(".NAME-dropdown")
-    for (const dropdown of dropdowns) {
-      DropdownManager.bindDropdownClickEvent(
-        dropdown,
-        "NAME-dropdown",
-        "NAME-dropdown-btn",
-        "NAME-dropdown-option",
+    const triggers = this.sectionElement.querySelectorAll<HTMLElement>(".NAME-dropdown-trigger")
+    for (const trigger of triggers) {
+      DropdownManager.bindShowDropdownMenuEventToTrigger(
+        trigger,
+        [
+          {
+            options: this.actions.find(({ action }) => action === trigger.dataset.action)?.options || [],
+          },
+        ],
         (activeValue) => {
           this.onAction(activeValue as ETextStylingType)
         }

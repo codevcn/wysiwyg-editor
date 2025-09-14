@@ -1,12 +1,12 @@
 import { editorContent } from "./content/editor.content.js"
 import { editorFrame } from "./frame/editor.frame.js"
 import { editorToolbar } from "./toolbar/editor.toolbar.js"
-import { ENotifyType, ERenderingMode } from "@/enums/global-enums.js"
+import { ERenderingMode } from "@/enums/global-enums.js"
 import { sanitizeHTML } from "@/helpers/common-helpers.js"
 import { TCodeVCNEditorConfig } from "@/types/global-types.js"
 import { imageBlockingModule } from "./toolbar/image-blocking/image-blocking.module.js"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
 import { textLinkingManager } from "./toolbar/text-linking/text-linking.manager.js"
+import { DropdownManager } from "../components/managers/dropdown.manager.js"
 
 class CodeVCNEditor {
   private editorWrapperID: string
@@ -16,7 +16,6 @@ class CodeVCNEditor {
     const editorWrapper = document.getElementById(editorWrapperID)
     if (!editorWrapper) {
       const message: string = `Container with id ${editorWrapperID} not found`
-      CodeVCNEditorHelper.notify(ENotifyType.ERROR, message)
       throw new Error(message)
     }
 
@@ -31,6 +30,16 @@ class CodeVCNEditor {
     } else {
       this.editorWrapper.replaceWith(editorFrame.getFrameElement())
     }
+
+    this.initClickOnPageBodyEvent()
+  }
+
+  initClickOnPageBodyEvent(): void {
+    document.body.addEventListener("click", (e) => {
+      queueMicrotask(() => {
+        DropdownManager.hideDropdownMenu(e)
+      })
+    })
   }
 
   /**

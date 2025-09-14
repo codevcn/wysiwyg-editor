@@ -1,5 +1,5 @@
 export class PageLayoutHelper {
-  static detectCollisionWithViewportEdges(target: HTMLElement, margin: number): void {
+  static detectCollisionWithViewportEdges(target: HTMLElement, margin: number = 10): void {
     const popoverRect = target.getBoundingClientRect()
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight

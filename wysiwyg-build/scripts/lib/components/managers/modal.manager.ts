@@ -3,25 +3,31 @@ import { LitHTMLHelper } from "@/helpers/common-helpers"
 import { html } from "lit-html"
 
 export class ModalManager {
-  private static modalElement: HTMLElement | null = null
+  private static readonly modalElement: HTMLElement = this.initModal()
+
+  static getModalElement(): HTMLElement {
+    return this.modalElement
+  }
 
   static showModal<TModal extends typeof Modal>(params: Parameters<TModal>): void {
     const modalElement = this.modalElement
-    if (!modalElement) return
     const { body, title, footer } = params[0]
-    modalElement.querySelector(".NAME-modal-body")!.replaceChildren(LitHTMLHelper.createFromRenderer(() => body, []))
+    modalElement
+      .querySelector(".NAME-modal-body")!
+      .replaceChildren(LitHTMLHelper.createElementFromRenderer(() => body, []))
     if (title) {
-      modalElement.querySelector(".NAME-modal-title")!.textContent = title
+      const titleElement = modalElement.querySelector<HTMLElement>(".NAME-modal-title")!
+      titleElement.textContent = title
+      titleElement.hidden = false
     } else {
-      modalElement.querySelector(".NAME-modal-title")!.remove()
+      modalElement.querySelector<HTMLLIElement>(".NAME-modal-title")!.hidden = true
     }
     if (footer) {
-      const modalFooterElement = modalElement.querySelector(".NAME-modal-footer")
-      if (modalFooterElement) {
-        modalFooterElement.replaceChildren(LitHTMLHelper.createFromRenderer(() => footer, []))
-      }
+      const modalFooterElement = modalElement.querySelector<HTMLElement>(".NAME-modal-footer")!
+      modalFooterElement.replaceChildren(LitHTMLHelper.createElementFromRenderer(() => footer, []))
+      modalFooterElement.hidden = false
     } else {
-      modalElement.querySelector(".NAME-modal-footer")!.remove()
+      modalElement.querySelector<HTMLLIElement>(".NAME-modal-footer")!.hidden = true
     }
     modalElement.classList.add("STATE-show")
   }
@@ -39,11 +45,10 @@ export class ModalManager {
     })
   }
 
-  static initModal(): HTMLElement {
-    const modalElement = LitHTMLHelper.createFromRenderer<typeof Modal>(Modal, [{ body: html`` }])
+  private static initModal(): HTMLElement {
+    const modalElement = LitHTMLHelper.createElementFromRenderer<typeof Modal>(Modal, [{ body: html`` }])
     document.body.appendChild(modalElement)
     this.bindHideEventHandler(modalElement)
-    this.modalElement = modalElement
     return modalElement
   }
 }

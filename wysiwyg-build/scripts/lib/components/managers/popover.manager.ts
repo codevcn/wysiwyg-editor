@@ -4,7 +4,7 @@ import { Popover } from "../popover"
 import { PageLayoutHelper } from "@/helpers/page-layout-helper"
 
 export class PopoverManager {
-  private static popoverElement: HTMLElement | null = null
+  private static readonly popoverElement: HTMLElement = this.initPopover()
 
   private static moveArrowPosition(popover: HTMLElement): void {
     const arrowElement = popover.querySelector<HTMLElement>(".NAME-popover-arrow")
@@ -15,7 +15,7 @@ export class PopoverManager {
     }
   }
 
-  private static movePopoverToTriggerCenter(trigger: HTMLElement, popover: HTMLElement): void {
+  private static movePopoverToTriggerPosition(trigger: HTMLElement, popover: HTMLElement): void {
     const triggerRect = trigger.getBoundingClientRect()
     popover.style.cssText += `
       left: ${triggerRect.left}px;
@@ -27,18 +27,17 @@ export class PopoverManager {
 
   static showPopover<TPopover extends typeof Popover>(trigger: HTMLElement, params: Parameters<TPopover>): void {
     const popoverElement = this.popoverElement
-    if (!popoverElement) return
     const { content } = params[0]
     const contentElement = popoverElement.querySelector(".NAME-popover-content")
     if (contentElement) {
-      contentElement.replaceChildren(LitHTMLHelper.createFromRenderer(() => content, []))
+      contentElement.replaceChildren(LitHTMLHelper.createElementFromRenderer(() => content, []))
     }
     popoverElement.classList.add("STATE-show")
-    this.movePopoverToTriggerCenter(trigger, popoverElement)
+    this.movePopoverToTriggerPosition(trigger, popoverElement)
   }
 
   static forceHidePopover(): void {
-    this.popoverElement?.classList.remove("STATE-show")
+    this.popoverElement.classList.remove("STATE-show")
   }
 
   private static hidePopoverOnMouseEvent(trigger: HTMLElement, e: MouseEvent, delay?: number): void {
@@ -52,7 +51,7 @@ export class PopoverManager {
     ) {
       if (delay && delay > 0) {
         setTimeout(() => {
-          this.popoverElement?.classList.remove("STATE-show")
+          this.popoverElement.classList.remove("STATE-show")
         }, delay)
       } else {
         this.popoverElement.classList.remove("STATE-show")
@@ -61,7 +60,6 @@ export class PopoverManager {
   }
 
   static bindHideEventToPopover(trigger: HTMLElement, delay?: number): void {
-    if (!this.popoverElement) return
     this.popoverElement.onmouseleave = (e) => {
       this.hidePopoverOnMouseEvent(trigger, e, delay)
     }
@@ -73,14 +71,13 @@ export class PopoverManager {
     }
   }
 
-  static getPopoverElement(): HTMLElement | null {
+  static getPopoverElement(): HTMLElement {
     return this.popoverElement
   }
 
-  static initPopover(): HTMLElement {
-    const popoverElement = LitHTMLHelper.createFromRenderer<typeof Popover>(Popover, [{ content: html`` }])
+  private static initPopover(): HTMLElement {
+    const popoverElement = LitHTMLHelper.createElementFromRenderer<typeof Popover>(Popover, [{ content: html`` }])
     document.body.appendChild(popoverElement)
-    this.popoverElement = popoverElement
     return popoverElement
   }
 }

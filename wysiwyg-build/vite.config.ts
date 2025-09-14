@@ -21,7 +21,7 @@ export default defineConfig({
             "@codemirror/language",
             "@codemirror/commands",
             "@codemirror/autocomplete",
-            "@codemirror/lint",
+            "@uiw/codemirror-theme-vscode",
           ],
           "codemirror-langs": ["@codemirror/lang-javascript", "@codemirror/lang-cpp", "@codemirror/lang-python"],
         },

@@ -1,1 +1,5 @@
 @import "tailwindcss";
+
+@theme {
+  --color-regular-border-cl: var(--vcn-border-gray-cl);
+}

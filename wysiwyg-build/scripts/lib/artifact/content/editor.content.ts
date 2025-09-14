@@ -5,6 +5,7 @@ import { blockquoteStylish } from "../toolbar/text-blocking/blockquote/blockquot
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { addImageModalManager } from "../toolbar/image-blocking/add-image.manager.js"
 import { textLinkingManager } from "../toolbar/text-linking/text-linking.manager.js"
+import { codeBlockingManager } from "../toolbar/code-blocking/code-blocking.manager.js"
 
 class EditorContent {
   private contentElement: HTMLElement
@@ -23,18 +24,30 @@ class EditorContent {
     this.bindPasteEventListener()
   }
 
+  private isEventAllowed(e: Event): boolean {
+    const target = e.target
+    if (target instanceof HTMLElement && target.closest(`.${codeBlockingManager.getCodeBlockBoxClassName()}`)) {
+      return false
+    }
+    return true
+  }
+
   private bindContentEventListeners(): void {
     this.contentElement.addEventListener("click", (e) => {
-      textLinkingManager.activateLinksOnEditorContentClick(e)
+      if (this.isEventAllowed(e)) {
+        textLinkingManager.activateLinksOnEditorContentClick(e)
+      }
     })
   }
 
   private bindSelectionChangeEventListener(): void {
-    document.addEventListener("selectionchange", () => {
-      CodeVCNEditorHelper.saveCurrentCaretPosition()
-      queueMicrotask(() => {
-        textLinkingManager.showModalOnCaretMoves()
-      })
+    document.addEventListener("selectionchange", (e) => {
+      if (this.isEventAllowed(e)) {
+        CodeVCNEditorHelper.saveCurrentCaretPosition()
+        queueMicrotask(() => {
+          textLinkingManager.showModalOnCaretMoves()
+        })
+      }
     })
   }
 
@@ -51,15 +64,17 @@ class EditorContent {
           spellcheck="false"
         ></div>
       `
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   private bindKeydownEventListener(): void {
     this.contentElement.addEventListener("keydown", (e) => {
-      queueMicrotask(() => {
-        textListingStylish.onAction(undefined, e)
-        blockquoteStylish.onAction(undefined, e)
-      })
+      if (this.isEventAllowed(e)) {
+        queueMicrotask(() => {
+          textListingStylish.onAction(undefined, e)
+          blockquoteStylish.onAction(undefined, e)
+        })
+      }
     })
   }
 
@@ -70,7 +85,7 @@ class EditorContent {
     if (topBlockElement) {
       CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
     } else {
-      this.contentElement.appendChild(CodeVCNEditorHelper.createNewTopBlockElement())
+      this.contentElement.appendChild(CodeVCNEditorHelper.createNewEmptyTopBlockElement())
     }
   }
 
@@ -79,18 +94,22 @@ class EditorContent {
    */
   private bindBeforeInputEventListener(): void {
     this.contentElement.addEventListener("beforeinput", (e) => {
-      if (e.inputType === "insertParagraph") {
-        e.preventDefault()
-        this.makeNewLine()
+      if (this.isEventAllowed(e)) {
+        if (e.inputType === "insertParagraph") {
+          e.preventDefault()
+          this.makeNewLine()
+        }
       }
     })
   }
 
   private bindPasteEventListener(): void {
     this.contentElement.addEventListener("paste", (e) => {
-      queueMicrotask(() => {
-        addImageModalManager.onPasteImage(e)
-      })
+      if (this.isEventAllowed(e)) {
+        queueMicrotask(() => {
+          addImageModalManager.onPasteImage(e)
+        })
+      }
     })
   }
 

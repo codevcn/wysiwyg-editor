@@ -13,7 +13,6 @@ class CodeBlockingModule {
     {
       action: EToolbarAction.CODE_BLOCKING,
       label: `<i class="bi bi-code-square text-lg"></i>`,
-      type: "button",
     },
   ]
 
@@ -41,7 +40,7 @@ class CodeBlockingModule {
             </button>`
         )}
       </div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   private bindEvents() {

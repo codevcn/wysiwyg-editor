@@ -14,12 +14,12 @@ export const sanitizeHTML = (html: string): string => {
 }
 
 export class LitHTMLHelper {
-  static createFromRenderer<T extends (...args: any[]) => TemplateResult<1>, R extends Element = HTMLElement>(
+  static createElementFromRenderer<T extends (...args: any[]) => TemplateResult<1>, R extends Element = HTMLElement>(
     Renderer: T,
     data: Parameters<T>
   ): R {
     const container = document.createElement("div")
-    render(Renderer(data), container)
+    render(Renderer(...data), container)
     return container.firstElementChild as R
   }
 }
@@ -65,4 +65,20 @@ export const copyTextToClipboard = (text: string, copyBoxElement?: HTMLElement):
       copyBoxElement.classList.remove("STATE-copied")
     }, 1500)
   }
+}
+
+export const nextFrame = (callback: () => void): void => {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(callback)
+  })
+}
+
+/**
+ * Chuyển đổi chữ cái đầu tiên thành chữ in hoa, các chữ cái còn lại thành chữ thường
+ * @param word string cần chuyển đổi
+ * @returns string đã chuyển đổi
+ */
+export const capitalizeWord = (word: string): string => {
+  if (typeof word !== "string" || word.length === 0) return word
+  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
 }

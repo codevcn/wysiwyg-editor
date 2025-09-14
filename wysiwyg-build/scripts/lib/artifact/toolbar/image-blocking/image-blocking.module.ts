@@ -13,7 +13,6 @@ class ImageBlockingModule {
     {
       action: EToolbarAction.IMAGE_BLOCKING,
       label: `<i class="bi bi-image-fill"></i>`,
-      type: "button",
     },
   ]
 
@@ -41,7 +40,7 @@ class ImageBlockingModule {
             </button>`
         )}
       </div>`
-    return LitHTMLHelper.createFromRenderer(Renderer, [])
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
   }
 
   private bindButtonEvents() {

@@ -7,7 +7,6 @@ import { CodeVCNEditorService } from "@/services/codevcn-editor.service"
 import { html } from "lit-html"
 import { imageBlockingStylish } from "./image-blocking.stylish"
 import type { TImageDimensions, TImageSkeletonReplacer } from "@/types/global-types"
-import { editorMaterials } from "../../layout/editor.materials"
 
 type TMemorizedImage = {
   imgUrl: string
@@ -23,7 +22,7 @@ class AddImageModalManager {
   private memorizedImage: TMemorizedImage | null = null
 
   constructor() {
-    this.addImageModal = editorMaterials.getModalElement()
+    this.addImageModal = ModalManager.getModalElement()
     this.uploadImageURL = ""
     this.maxImageSizeAllowed = 10 * 1024 * 1024 // 10MB
     this.maxImagesCountAllowed = 5
