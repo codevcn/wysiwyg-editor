@@ -25,14 +25,14 @@ import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode"
 import { javascript } from "@codemirror/lang-javascript"
 import { python } from "@codemirror/lang-python"
 import { cpp } from "@codemirror/lang-cpp"
-import type { ILoadedModules } from "@/types/global-interfaces"
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
 import { ECodeBlockingLanguage, EErrorMessage } from "@/enums/global-enums"
 import { html } from "lit-html"
 import { DropdownManager } from "@/lib/components/managers/dropdown.manager"
 import { codeBlockingManager } from "./code-blocking.manager"
-import { testPerformance } from "@/dev/helpers"
+
+type TCodeBlockView = EditorView
 
 type TInitCodeBlockViewResult = {
   codeBlockView: TCodeBlockView
@@ -41,8 +41,6 @@ type TInitCodeBlockViewResult = {
 }
 
 type TCodeBlockName = `name-${string}`
-
-type TCodeBlockView = InstanceType<ILoadedModules["EditorView"]>
 
 type TCreateCodeBlockBoxElementResult = {
   boxElement: HTMLElement
@@ -55,46 +53,11 @@ type TCompartments = {
 }
 
 export class CodeBlockViewManager {
-  private loadedModules: ILoadedModules | null = null
   private savedCodeBlocks: Map<TCodeBlockName, TCodeBlockView> = new Map()
   private languageCompartment: Compartment | null = null
   private themeCompartment: Compartment | null = null
 
   constructor(private readonly codeBlockBoxElementTagName: string, private readonly codeBlockBoxClassName: string) {}
-
-  private async loadModulesOnce(): Promise<ILoadedModules> {
-    if (this.loadedModules) return this.loadedModules
-
-    this.loadedModules = {
-      EditorState,
-      EditorView,
-      keymap,
-      highlightSpecialChars,
-      drawSelection,
-      highlightActiveLine,
-      lineNumbers,
-      defaultHighlightStyle,
-      syntaxHighlighting,
-      indentOnInput,
-      bracketMatching,
-      foldGutter,
-      foldKeymap,
-      history,
-      historyKeymap,
-      defaultKeymap,
-      darkTheme: vscodeDark,
-      lightTheme: vscodeLight,
-      javascript,
-      python,
-      cpp,
-      closeBrackets,
-      closeBracketsKeymap,
-      undo,
-      redo,
-    }
-
-    return this.loadedModules
-  }
 
   private initCompartments(): TCompartments {
     this.languageCompartment = this.languageCompartment || new Compartment()
@@ -106,7 +69,6 @@ export class CodeBlockViewManager {
   }
 
   private async getLanguageExtension(language: ECodeBlockingLanguage): Promise<Extension> {
-    const { javascript, python, cpp } = await this.loadModulesOnce()
     if (language === ECodeBlockingLanguage.JAVASCRIPT) {
       return javascript()
     }
@@ -129,38 +91,36 @@ export class CodeBlockViewManager {
   }
 
   private switchTheme(e: MouseEvent) {
-    this.loadModulesOnce().then(({ lightTheme, darkTheme }) => {
-      const themeCompartment = this.themeCompartment
-      if (!themeCompartment) return
-      const btn = e.currentTarget as HTMLElement
-      const codeBlockBox = btn.closest(`.${this.codeBlockBoxClassName}`) as HTMLElement
-      const isDarkTheme = codeBlockBox.dataset.isDarkTheme === "true"
-      if (isDarkTheme) {
-        codeBlockBox.dataset.isDarkTheme = "false"
-        const view = this.savedCodeBlocks.get(codeBlockBox.dataset.codeBlockBoxName as TCodeBlockName)
-        if (view) {
-          view.dispatch({
-            effects: themeCompartment.reconfigure(lightTheme),
-          })
-          const themeLabel = btn.querySelector(".NAME-theme-label")
-          if (themeLabel) {
-            themeLabel.innerHTML = `<i class="bi bi-sun-fill"></i>`
-          }
-        }
-      } else {
-        codeBlockBox.dataset.isDarkTheme = "true"
-        const view = this.savedCodeBlocks.get(codeBlockBox.dataset.codeBlockBoxName as TCodeBlockName)
-        if (view) {
-          view.dispatch({
-            effects: themeCompartment.reconfigure(darkTheme),
-          })
-          const themeLabel = btn.querySelector(".NAME-theme-label")
-          if (themeLabel) {
-            themeLabel.innerHTML = `<i class="bi bi-moon-fill"></i>`
-          }
+    const themeCompartment = this.themeCompartment
+    if (!themeCompartment) return
+    const btn = e.currentTarget as HTMLElement
+    const codeBlockBox = btn.closest(`.${this.codeBlockBoxClassName}`) as HTMLElement
+    const isDarkTheme = codeBlockBox.dataset.isDarkTheme === "true"
+    if (isDarkTheme) {
+      codeBlockBox.dataset.isDarkTheme = "false"
+      const view = this.savedCodeBlocks.get(codeBlockBox.dataset.codeBlockBoxName as TCodeBlockName)
+      if (view) {
+        view.dispatch({
+          effects: themeCompartment.reconfigure(vscodeLight),
+        })
+        const themeLabel = btn.querySelector(".NAME-theme-label")
+        if (themeLabel) {
+          themeLabel.innerHTML = `<i class="bi bi-sun-fill"></i>`
         }
       }
-    })
+    } else {
+      codeBlockBox.dataset.isDarkTheme = "true"
+      const view = this.savedCodeBlocks.get(codeBlockBox.dataset.codeBlockBoxName as TCodeBlockName)
+      if (view) {
+        view.dispatch({
+          effects: themeCompartment.reconfigure(vscodeDark),
+        })
+        const themeLabel = btn.querySelector(".NAME-theme-label")
+        if (themeLabel) {
+          themeLabel.innerHTML = `<i class="bi bi-moon-fill"></i>`
+        }
+      }
+    }
   }
 
   private switchLanguage(trigger: HTMLElement, language: ECodeBlockingLanguage) {
@@ -207,9 +167,9 @@ export class CodeBlockViewManager {
     const view = this.savedCodeBlocks.get(codeBlockBox.dataset.codeBlockBoxName as TCodeBlockName)
     if (!view) return
     if (action === "undo") {
-      this.loadedModules?.undo(view)
+      undo(view)
     } else {
-      this.loadedModules?.redo(view)
+      redo(view)
     }
   }
 
@@ -348,34 +308,11 @@ export class CodeBlockViewManager {
   }
 
   private async generateStartState(language: ECodeBlockingLanguage, isDarkTheme: boolean): Promise<EditorState> {
-    const {
-      EditorState,
-      EditorView,
-      keymap,
-      highlightSpecialChars,
-      drawSelection,
-      highlightActiveLine,
-      lineNumbers,
-      defaultHighlightStyle,
-      syntaxHighlighting,
-      indentOnInput,
-      bracketMatching,
-      foldGutter,
-      foldKeymap,
-      history,
-      historyKeymap,
-      defaultKeymap,
-      darkTheme,
-      lightTheme,
-      closeBrackets,
-      closeBracketsKeymap,
-    } = await this.loadModulesOnce()
-
     const { languageCompartment, themeCompartment } = this.initCompartments()
 
     const languageExtension = languageCompartment.of(await this.getLanguageExtension(language))
 
-    const themeExtension = themeCompartment.of(isDarkTheme ? darkTheme : lightTheme)
+    const themeExtension = themeCompartment.of(isDarkTheme ? vscodeDark : vscodeLight)
 
     return EditorState.create({
       doc: "",
