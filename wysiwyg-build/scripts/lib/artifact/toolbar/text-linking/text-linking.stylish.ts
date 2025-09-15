@@ -54,7 +54,7 @@ class TextLinkingStylish {
     if (anchorNode.tagName === this.linkTagName) {
       return anchorNode as HTMLAnchorElement
     }
-    return CodeVCNEditorHelper.getClosestElementOfNode<HTMLAnchorElement>(
+    return CodeVCNEditorHelper.getClosestElementOfElement<HTMLAnchorElement>(
       anchorNode,
       (element) => element.tagName === this.linkTagName
     )
@@ -110,7 +110,7 @@ class TextLinkingStylish {
   }
 
   private makeLinking(showLinkModalHandler: TShowLinkModalHandler): void {
-    const selection = editorContent.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
     if (!selection) return
     CodeVCNEditorHelper.saveCurrentCaretPosition(selection)
     if (CodeVCNEditorHelper.isSelectingContent()) {

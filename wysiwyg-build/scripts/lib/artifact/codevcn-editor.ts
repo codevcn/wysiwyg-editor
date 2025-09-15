@@ -5,7 +5,6 @@ import { ERenderingMode } from "@/enums/global-enums.js"
 import { sanitizeHTML } from "@/helpers/common-helpers.js"
 import { TCodeVCNEditorConfig } from "@/types/global-types.js"
 import { imageBlockingModule } from "./toolbar/image-blocking/image-blocking.module.js"
-import { textLinkingManager } from "./toolbar/text-linking/text-linking.manager.js"
 import { DropdownManager } from "../components/managers/dropdown.manager.js"
 
 class CodeVCNEditor {
@@ -48,7 +47,6 @@ class CodeVCNEditor {
    */
   setContent(html: string): void {
     editorContent.getContentElement().innerHTML = sanitizeHTML(html)
-    this.setupEditorContent()
   }
 
   /**
@@ -77,10 +75,6 @@ class CodeVCNEditor {
 
   getFrameElement(): HTMLElement {
     return editorFrame.getFrameElement()
-  }
-
-  setupEditorContent(): void {
-    textLinkingManager.scanEditorContentForTextLink()
   }
 
   configModule(configs: TCodeVCNEditorConfig) {

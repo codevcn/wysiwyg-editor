@@ -46,14 +46,13 @@ class TextStylingStylish {
   }
 
   /**
-   * Lấy thẻ <styling tag> gần nhất chứa đầy đủ vùng bôi đen.
+   * Lấy thẻ <styling tag> gần nhất chứa đầy đủ vùng bôi đen (đã check lại rồi, chuẩn rồi).
    */
   private setParentStylingElement(selectionRange: Range): void {
     const startContainer = selectionRange.startContainer
-    let node =
-      startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : (startContainer as HTMLElement)
-    if (!node) return
-    this.parentStylingElement = CodeVCNEditorHelper.getClosestElementOfNode(
+    const node = startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : startContainer
+    if (!node || !(node instanceof HTMLElement)) return
+    this.parentStylingElement = CodeVCNEditorHelper.getClosestElementOfElement(
       node,
       (node) => this.ifTagNameIsCurrentStyling(node.tagName) && node.contains(selectionRange.endContainer)
     )
@@ -207,19 +206,17 @@ class TextStylingStylish {
     if (this.parentStylingElement) {
       // nếu selection nằm hoàn toàn trong 1 styling tag thì xóa styling của selection
       this.unstylingFromSelection(selectionRange)
+      this.mergeAdjacentStyling(this.parentStylingElement)
     } else {
       // nếu không nằm hoàn toàn trong styling tag thì bọc content bởi styling tag và xóa các tag giống styling tag
       const parentStylingElement = this.warpContentByStylingTag(selectionRange)
       this.removeOverlapChildTags(parentStylingElement)
-    }
-
-    if (this.parentStylingElement) {
-      this.mergeAdjacentStyling(this.parentStylingElement)
+      this.mergeAdjacentStyling(parentStylingElement)
     }
   }
 
   onAction(stylingType: ETextStylingType): void {
-    const selection = editorContent.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
     if (!selection) return
     const range = selection.getRangeAt(0)
     if (range.collapsed) return

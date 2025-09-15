@@ -99,7 +99,7 @@ class TextListingStylish {
       }
     } else {
       const anchorNode = selection.anchorNode!
-      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromNode(
+      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(
         anchorNode.nodeType === Node.TEXT_NODE ? (anchorNode.parentNode as HTMLElement) : (anchorNode as HTMLElement)
       )
       if (topBlockElement) {
@@ -128,7 +128,7 @@ class TextListingStylish {
   }
 
   private makeListingOnToolbarButtonClick(listingType: ETextListingType): void {
-    const selection = editorContent.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
     if (!selection) return
     this.setCurrentTagName(listingType)
     this.makeListing(selection)
@@ -137,12 +137,12 @@ class TextListingStylish {
   private makeListingOnKeyboardEvent(e: KeyboardEvent): void {
     if (e.key === "Enter") {
       e.preventDefault()
-      const selection = editorContent.checkIsFocusingInEditorContent()
+      const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
       if (!selection) return
       this.makeListing(selection)
     } else if (e.key === "Tab") {
       e.preventDefault()
-      const selection = editorContent.checkIsFocusingInEditorContent()
+      const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
       if (!selection) return
       this.makeNestedListing(selection)
     }

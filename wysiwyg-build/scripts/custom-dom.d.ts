@@ -1,5 +1,7 @@
 export {}
 
 declare global {
-  interface HTMLElement {}
+  interface HTMLElement {
+    "binded-text-link-popover-event": boolean
+  }
 }

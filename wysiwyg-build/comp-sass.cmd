@@ -1,1 +1,1 @@
-npx sass --watch ./styles/scss:../wysiwyg/public/styles --no-source-map
+npx sass --watch ./styles/main:../wysiwyg/public/styles --no-source-map

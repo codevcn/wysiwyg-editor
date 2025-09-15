@@ -1,5 +1,6 @@
 Tree view of: D:\D-Documents\Testing\wysiwyg
 
+├── .gitignore
 ├── print_tree.py
 ├── project_tree.txt
 ├── wysiwyg
@@ -9,16 +10,129 @@ Tree view of: D:\D-Documents\Testing\wysiwyg
 │   ├── package-lock.json
 │   ├── package.json
 │   ├── public
+│   │   ├── assets
+│   │   │   └── images
+│   │   │       └── codevcn-editor
+│   │   │           └── list-bullet.svg
 │   │   ├── scripts
-│   │   │   ├── editor-frame.js
-│   │   │   ├── helpers
-│   │   │   │   └── helpers.js
-│   │   │   └── main.js
+│   │   │   ├── codemirror-R--KJ85V.js
+│   │   │   ├── codemirror-R--KJ85V.js.map
+│   │   │   ├── codemirror-langs-9Iao0QE_.js
+│   │   │   ├── codemirror-langs-9Iao0QE_.js.map
+│   │   │   ├── main.js
+│   │   │   └── main.js.map
 │   │   └── styles
-│   │       ├── custom.css
+│   │       ├── libs
+│   │       │   └── prism
+│   │       │       └── themes
+│   │       │           ├── vscode-dark-plus.css
+│   │       │           └── vscode.css
+│   │       ├── main.css
 │   │       └── tw-output.css
 │   └── src
 │       ├── app.js
+│       ├── images
+│       │   ├── 1756996946769-33333.jpg
+│       │   ├── 1756997133057-33333.jpg
+│       │   ├── 1756997390282-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1756998221059-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1756999329121-33333.jpg
+│       │   ├── 1756999519851-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757001259385-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757001437348-33333.jpg
+│       │   ├── 1757001842612-33333.jpg
+│       │   ├── 1757001871778-33333.jpg
+│       │   ├── 1757001912169-33333.jpg
+│       │   ├── 1757001954472-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757002053598-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757002098444-33333.jpg
+│       │   ├── 1757002421967-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757002581952-33333.jpg
+│       │   ├── 1757002610585-33333.jpg
+│       │   ├── 1757002632190-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757002707782-33333.jpg
+│       │   ├── 1757002752232-33333.jpg
+│       │   ├── 1757002810508-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757002841778-33333.jpg
+│       │   ├── 1757002891408-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757002921822-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757002943794-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757003008255-33333.jpg
+│       │   ├── 1757003269498-33333.jpg
+│       │   ├── 1757003389734-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757003417347-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757003462119-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757003530440-33333.jpg
+│       │   ├── 1757003625784-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757004027479-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757004131265-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757004234561-33333.jpg
+│       │   ├── 1757004490968-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757005438126-33333.jpg
+│       │   ├── 1757005586700-33333.jpg
+│       │   ├── 1757005677896-33333.jpg
+│       │   ├── 1757005708280-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757005837405-33333.jpg
+│       │   ├── 1757005871168-33333.jpg
+│       │   ├── 1757005989388-33333.jpg
+│       │   ├── 1757006091224-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757006939059-33333.jpg
+│       │   ├── 1757007088953-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757007169650-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757007214081-08d3d5191c73fbafa3b1c5c1bc5cbd3cmeo-tom-dang-khong-biet-o-dau-voi-nhieu-dau-hoi - Copy.jpg
+│       │   ├── 1757046137509-33333.jpg
+│       │   ├── 1757067666195-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757067691440-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757067811158-9d4d168f92781853d44919433eb17daa - Copy.jpg
+│       │   ├── 1757067838364-33333.jpg
+│       │   ├── 1757067864843-33333.jpg
+│       │   ├── 1757067994844-98902569a74f39e4dc24636a652ba278.jpg
+│       │   ├── 1757068031869-33333.jpg
+│       │   ├── 1757068196121-33333.jpg
+│       │   ├── 1757068398770-33333.jpg
+│       │   ├── 1757068820582-image.png
+│       │   ├── 1757069139776-image.png
+│       │   ├── 1757069334832-image.png
+│       │   ├── 1757069364726-image.png
+│       │   ├── 1757069543932-image.png
+│       │   ├── 1757069664477-image.png
+│       │   ├── 1757069734029-269896985_3216471578635379_9078170803931049744_n.png
+│       │   ├── 1757069857649-269896985_3216471578635379_9078170803931049744_n.png
+│       │   ├── 1757071848598-33333.jpg
+│       │   ├── 1757073050507-image.png
+│       │   ├── 1757073082771-image.png
+│       │   ├── 1757073219919-image.png
+│       │   ├── 1757073445995-image.png
+│       │   ├── 1757073608129-image.png
+│       │   ├── 1757078135531-image.png
+│       │   ├── 1757078288747-image.png
+│       │   ├── 1757078396121-anime-chuyen-the-tu-mot-trong-nhung-bo-manga-ban-chay-nhat-6.jpg
+│       │   ├── 1757078400377-Akang Lucas â¸ NCT.jpg
+│       │   ├── 1757080430389-wallpaper_solasta_crown_of_the_magister_07_1920x1080.jpg
+│       │   ├── 1757080663081-image.png
+│       │   ├── 1757080743187-image.png
+│       │   ├── 1757322617961-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757693747089-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757694476235-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757694485383-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757694494723-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757694590165-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757694657810-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757694712992-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757695166660-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757695187122-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757695475817-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757696622925-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757697039959-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757697251333-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757697281049-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757697304040-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757697569598-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757697599885-account_45_1752429434_3c982a22def2c5b1.png
+│       │   ├── 1757697710581-image.png
+│       │   ├── 1757697954393-image.png
+│       │   ├── 1757698042423-image.png
+│       │   └── 1757698062996-image.png
 │       ├── routes
 │       │   └── index.js
 │       └── views
@@ -26,21 +140,91 @@ Tree view of: D:\D-Documents\Testing\wysiwyg
 │           │   └── home.ejs
 │           └── partials
 │               ├── footer.ejs
-│               └── header.ejs
+│               ├── header.ejs
+│               └── page-head.ejs
 └── wysiwyg-build
     ├── .prettierrc.json
+    ├── check-ts.cmd
     ├── comp-sass.cmd
     ├── dev.cmd
     ├── package-lock.json
     ├── package.json
     ├── scripts
-    │   ├── editor-frame.ts
-    │   ├── helpers
+    │   ├── custom-dom.d.ts
+    │   ├── dev
     │   │   └── helpers.ts
-    │   └── main.ts
+    │   ├── enums
+    │   │   └── global-enums.ts
+    │   ├── helpers
+    │   │   ├── codevcn-editor-helper.ts
+    │   │   ├── common-helpers.ts
+    │   │   ├── error-helper.ts
+    │   │   └── page-layout-helper.ts
+    │   ├── lib
+    │   │   ├── artifact
+    │   │   │   ├── codevcn-editor.ts
+    │   │   │   ├── content
+    │   │   │   │   └── editor.content.ts
+    │   │   │   ├── event
+    │   │   │   │   └── event-emitter.ts
+    │   │   │   ├── frame
+    │   │   │   │   └── editor.frame.ts
+    │   │   │   └── toolbar
+    │   │   │       ├── code-blocking
+    │   │   │       │   ├── code-block-view.manager.ts
+    │   │   │       │   ├── code-blocking.manager.ts
+    │   │   │       │   ├── code-blocking.module.ts
+    │   │   │       │   └── code-blocking.stylish.ts
+    │   │   │       ├── editor.toolbar.ts
+    │   │   │       ├── image-blocking
+    │   │   │       │   ├── add-image.manager.ts
+    │   │   │       │   ├── image-blocking.module.ts
+    │   │   │       │   └── image-blocking.stylish.ts
+    │   │   │       ├── text-blocking
+    │   │   │       │   ├── blockquote
+    │   │   │       │   │   ├── blockquote.module.ts
+    │   │   │       │   │   └── blockquote.stylish.ts
+    │   │   │       │   └── content-box
+    │   │   │       ├── text-linking
+    │   │   │       │   ├── text-linking.manager.ts
+    │   │   │       │   ├── text-linking.module.ts
+    │   │   │       │   └── text-linking.stylish.ts
+    │   │   │       ├── text-listing
+    │   │   │       │   ├── text-listing.module.ts
+    │   │   │       │   └── text-listing.stylish.ts
+    │   │   │       ├── text-styling
+    │   │   │       │   ├── text-styling.module.ts
+    │   │   │       │   └── text-styling.stylish.ts
+    │   │   │       └── toolbar-button.ts
+    │   │   └── components
+    │   │       ├── code-block.ts
+    │   │       ├── dropdown.ts
+    │   │       ├── managers
+    │   │       │   ├── dropdown.manager.ts
+    │   │       │   ├── modal.manager.ts
+    │   │       │   └── popover.manager.ts
+    │   │       ├── modal.ts
+    │   │       ├── popover.ts
+    │   │       └── skeleton.ts
+    │   ├── main.ts
+    │   ├── services
+    │   │   └── codevcn-editor.service.ts
+    │   └── types
+    │       ├── api-types.ts
+    │       ├── global-interfaces.ts
+    │       └── global-types.ts
     ├── styles
-    │   ├── scss
-    │   │   └── custom.scss
+    │   ├── main
+    │   │   ├── codevcn-editor
+    │   │   │   ├── _codevcn-editor.scss
+    │   │   │   ├── _colors.scss
+    │   │   │   └── _editor-components.scss
+    │   │   ├── libs
+    │   │   │   └── prism
+    │   │   │       └── themes
+    │   │   │           ├── vscode-dark-plus.scss
+    │   │   │           └── vscode.scss
+    │   │   └── main.scss
     │   └── tailwind
     │       └── tw-input.css
     ├── tsconfig.json

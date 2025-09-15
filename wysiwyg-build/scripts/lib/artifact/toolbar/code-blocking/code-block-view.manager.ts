@@ -288,6 +288,10 @@ export class CodeBlockViewManager {
         e.stopPropagation()
         return false
       },
+      input: (e, view) => {
+        e.stopPropagation()
+        return false
+      },
     })
   }
 

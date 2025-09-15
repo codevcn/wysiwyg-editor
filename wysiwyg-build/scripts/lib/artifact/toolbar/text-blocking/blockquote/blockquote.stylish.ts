@@ -68,7 +68,7 @@ class BlockquoteStylish {
   }
 
   private makeBlockquoteOnButtonClick(): void {
-    const selection = editorContent.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
     if (!selection) return
     // bắt buộc phải check bằng selection hiện tại khi tạo blockquote bằng click on button, vì
     // khi tạo blockquote mới thì chưa biết caret có nằm trong blockquote hay không
@@ -128,7 +128,7 @@ class BlockquoteStylish {
 
   private makeBlockquoteOnKeyboardEvent(e: KeyboardEvent): void {
     if (e.key === "Enter") {
-      const selection = editorContent.checkIsFocusingInEditorContent()
+      const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
       if (!selection) return
       const isInBlockquote = this.checkIfIsInBlockquote(selection)
       if (!isInBlockquote) return

@@ -8,6 +8,7 @@ import { EErrorMessage, EInternalEvents } from "@/enums/global-enums"
 import { copyTextToClipboard, isValidUrl } from "@/helpers/common-helpers"
 import type { TOnSaveLink } from "@/types/api-types"
 import { eventEmitter } from "../../event/event-emitter"
+import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
 
 type TTextLinkFormData = {
   link: string
@@ -212,6 +213,7 @@ class TextLinkingManager {
   }
 
   setupTextLinkElementToShowPopover(textLinkElement: HTMLAnchorElement): void {
+    textLinkElement["binded-text-link-popover-event"] = true
     textLinkElement.addEventListener("mouseenter", () => {
       this.currentLink = textLinkElement.getAttribute("href")
       this.currentTextOfLink = textLinkElement.textContent
@@ -226,23 +228,24 @@ class TextLinkingManager {
     this.showTextLinkPopover()
   }
 
+  showModalAtTextLinkElement(textLinkElement: HTMLAnchorElement): void {
+    const link = textLinkElement.getAttribute("href")
+    if (link) {
+      this.showPopoverWithLinkInfo(link, textLinkElement)
+    }
+  }
+
   showModalOnCaretMoves(): void {
-    const selection = editorContent.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
     if (selection) {
       const node = selection.anchorNode
       const element = node?.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement)
       if (element?.tagName === textLinkingStylish.getTextLinkTagName()) {
-        const link = element.getAttribute("href")
-        if (link) {
-          this.showPopoverWithLinkInfo(link, element as HTMLAnchorElement)
-        }
+        this.showModalAtTextLinkElement(element as HTMLAnchorElement)
       } else {
         const linkElement = element?.closest<HTMLAnchorElement>(textLinkingStylish.getTextLinkTagName())
         if (linkElement && editorContent.getContentElement().contains(linkElement)) {
-          const link = linkElement.getAttribute("href")
-          if (link) {
-            this.showPopoverWithLinkInfo(link, linkElement)
-          }
+          this.showModalAtTextLinkElement(linkElement)
         } else {
           PopoverManager.forceHidePopover()
         }
@@ -268,17 +271,13 @@ class TextLinkingManager {
     }
   }
 
-  scanEditorContentForTextLink(): void {
-    const editorContentElement = editorContent.getContentElement()
-    const textLinkElements = editorContentElement.querySelectorAll<HTMLAnchorElement>(
-      textLinkingStylish.getTextLinkTagName()
-    )
-    for (const textLinkElement of textLinkElements) {
-      const link = textLinkElement.getAttribute("href")
-      if (link) {
-        this.setupTextLinkElementToShowPopover(textLinkElement)
+  showTextLinkModalOnContentMouseMove(e: MouseEvent): void {
+    queueMicrotask(() => {
+      const target = e.target
+      if (target instanceof HTMLElement && target.tagName === textLinkingStylish.getTextLinkTagName()) {
+        this.showModalAtTextLinkElement(target as HTMLAnchorElement)
       }
-    }
+    })
   }
 }
 

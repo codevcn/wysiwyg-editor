@@ -17,22 +17,37 @@ class EditorContent {
   }
 
   private setupContentArea(): void {
-    this.bindContentEventListeners()
+    this.bindContentEventListener()
     this.bindSelectionChangeEventListener()
     this.bindKeydownEventListener()
     this.bindBeforeInputEventListener()
     this.bindPasteEventListener()
+    this.bindMouseMoveEventListener()
   }
 
-  private isEventAllowed(e: Event): boolean {
-    const target = e.target
-    if (target instanceof HTMLElement && target.closest(`.${codeBlockingStylish.getCodeBlockBoxClassName()}`)) {
-      return false
-    }
-    return true
+  private bindMouseMoveEventListener(): void {
+    let timer: NodeJS.Timeout
+    const debounceTime: number = 100
+    this.contentElement.addEventListener("mousemove", (e) => {
+      clearTimeout(timer)
+      timer = setTimeout(() => {
+        textLinkingManager.showTextLinkModalOnContentMouseMove(e)
+      }, debounceTime)
+    })
   }
 
-  private bindContentEventListeners(): void {
+  private bindKeydownEventListener(): void {
+    this.contentElement.addEventListener("keydown", (e) => {
+      if (this.isEventAllowed(e)) {
+        queueMicrotask(() => {
+          textListingStylish.onAction(undefined, e)
+          blockquoteStylish.onAction(undefined, e)
+        })
+      }
+    })
+  }
+
+  private bindContentEventListener(): void {
     this.contentElement.addEventListener("click", (e) => {
       if (this.isEventAllowed(e)) {
         textLinkingManager.activateLinksOnEditorContentClick(e)
@@ -49,44 +64,6 @@ class EditorContent {
         })
       }
     })
-  }
-
-  getContentElementName(): string {
-    return this.contentElementName
-  }
-
-  private createContentElement(): HTMLElement {
-    const Renderer = () =>
-      html`
-        <div
-          class="${this.contentElementName} p-4 min-h-[300px] outline-none"
-          contenteditable="true"
-          spellcheck="false"
-        ></div>
-      `
-    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
-  }
-
-  private bindKeydownEventListener(): void {
-    this.contentElement.addEventListener("keydown", (e) => {
-      if (this.isEventAllowed(e)) {
-        queueMicrotask(() => {
-          textListingStylish.onAction(undefined, e)
-          blockquoteStylish.onAction(undefined, e)
-        })
-      }
-    })
-  }
-
-  private makeNewLine(): void {
-    const selection = this.checkIsFocusingInEditorContent()
-    if (!selection) return
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
-    if (topBlockElement) {
-      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
-    } else {
-      this.contentElement.appendChild(CodeVCNEditorHelper.createNewEmptyTopBlockElement())
-    }
   }
 
   /**
@@ -113,18 +90,43 @@ class EditorContent {
     })
   }
 
-  getContentElement(): HTMLElement {
-    return this.contentElement
+  private isEventAllowed(e: Event): boolean {
+    const target = e.target
+    if (target instanceof HTMLElement && target.closest(`.${codeBlockingStylish.getCodeBlockBoxClassName()}`)) {
+      return false
+    }
+    return true
   }
 
-  checkIsFocusingInEditorContent(): Selection | null {
-    const selection = window.getSelection()
-    if (!selection || selection.rangeCount === 0) return null
-    const { anchorNode, focusNode } = selection
-    if (!anchorNode || !focusNode) return null
-    if (!this.contentElement.contains(anchorNode) || !this.contentElement.contains(focusNode)) return null
-    if (this.contentElement.isSameNode(anchorNode) || this.contentElement.isSameNode(focusNode)) return null
-    return selection
+  getContentElementName(): string {
+    return this.contentElementName
+  }
+
+  private createContentElement(): HTMLElement {
+    const Renderer = () =>
+      html`
+        <div
+          class="${this.contentElementName} p-4 min-h-[300px] outline-none"
+          contenteditable="true"
+          spellcheck="false"
+        ></div>
+      `
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
+  }
+
+  private makeNewLine(): void {
+    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+    if (!selection) return
+    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
+    if (topBlockElement) {
+      CodeVCNEditorHelper.splitElementInHalfAtCaret(topBlockElement, selection)
+    } else {
+      this.contentElement.appendChild(CodeVCNEditorHelper.createNewEmptyTopBlockElement())
+    }
+  }
+
+  getContentElement(): HTMLElement {
+    return this.contentElement
   }
 }
 

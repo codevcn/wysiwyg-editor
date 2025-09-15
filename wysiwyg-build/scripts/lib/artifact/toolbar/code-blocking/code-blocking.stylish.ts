@@ -3,8 +3,6 @@ import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
 import Prism from "prismjs"
 import "prismjs/components/prism-clike"
-import "prismjs/components/prism-c"
-import "prismjs/components/prism-cpp"
 import "prismjs/components/prism-javascript"
 import "prismjs/components/prism-python"
 
@@ -28,7 +26,7 @@ class CodeBlockingStylish {
   }
 
   jumpToPreviousLineFromInsideCodeBlock(codeBlockParent: HTMLElement): void {
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromNode(codeBlockParent)
+    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(codeBlockParent)
     if (!topBlockElement) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.TOP_BLOCK_NOT_FOUND)
     }
@@ -38,7 +36,7 @@ class CodeBlockingStylish {
   }
 
   jumpToNewLineFromInsideCodeBlock(codeBlockParent: HTMLElement): void {
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromNode(codeBlockParent)
+    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(codeBlockParent)
     if (!topBlockElement) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.TOP_BLOCK_NOT_FOUND)
     }
@@ -51,16 +49,54 @@ class CodeBlockingStylish {
     return `language-${language.toLowerCase()}`
   }
 
+  private createNewInlineCodeBlockElement(language: ECodeBlockingLanguage = ECodeBlockingLanguage.CPP): HTMLElement {
+    const inlineCodeBlockElement = document.createElement(this.inlineCodeBlockElementTagName)
+    inlineCodeBlockElement.className = this.generateInlineCodeBlockClassName(language)
+    return inlineCodeBlockElement
+  }
+
+  private wrapRangeContentByInlineCodeBlock(
+    range: Range,
+    language: ECodeBlockingLanguage = ECodeBlockingLanguage.CPP
+  ): HTMLElement {
+    const content = range.extractContents()
+    const inlineCodeBlockElement = this.createNewInlineCodeBlockElement(language)
+    inlineCodeBlockElement.appendChild(content)
+    range.insertNode(inlineCodeBlockElement)
+    return inlineCodeBlockElement
+  }
+
   private wrapSelectionByInlineCodeBlock(
     selection: Selection,
     language: ECodeBlockingLanguage = ECodeBlockingLanguage.CPP
   ): void {
-    const content = selection.getRangeAt(0).extractContents()
-    const inlineCodeBlockElement = document.createElement(this.inlineCodeBlockElementTagName)
-    inlineCodeBlockElement.className = this.generateInlineCodeBlockClassName(language)
-    inlineCodeBlockElement.appendChild(content)
-    selection.getRangeAt(0).insertNode(inlineCodeBlockElement)
-    Prism.highlightElement(inlineCodeBlockElement)
+    const topBlocks = CodeVCNEditorHelper.getSelectedTopBlocks(selection)
+    if (!topBlocks) return
+    if (topBlocks.length > 1) {
+      const range = selection.getRangeAt(0)
+
+      const firstTopBlock = topBlocks[0]
+      const clonedAfterRange = range.cloneRange()
+      clonedAfterRange.setEnd(firstTopBlock, firstTopBlock.childNodes.length)
+      const inlineCodeBlockElementAfter = this.wrapRangeContentByInlineCodeBlock(clonedAfterRange, language)
+      Prism.highlightElement(inlineCodeBlockElementAfter)
+
+      const lastTopBlock = topBlocks[topBlocks.length - 1]
+      const clonedBeforeRange = range.cloneRange()
+      clonedBeforeRange.setStart(lastTopBlock, 0)
+      const inlineCodeBlockElementBefore = this.wrapRangeContentByInlineCodeBlock(clonedBeforeRange, language)
+      Prism.highlightElement(inlineCodeBlockElementBefore)
+
+      const otherTopBlocks = topBlocks.slice(1, topBlocks.length - 1)
+      for (const topBlock of otherTopBlocks) {
+        const inlineCodeBlockElement = this.createNewInlineCodeBlockElement(language)
+        CodeVCNEditorHelper.wrapElementContentsByEmptyElement(topBlock, inlineCodeBlockElement)
+        Prism.highlightElement(inlineCodeBlockElement)
+      }
+    } else if (topBlocks.length === 1) {
+      const inlineCodeBlockElement = this.wrapRangeContentByInlineCodeBlock(selection.getRangeAt(0), language)
+      Prism.highlightElement(inlineCodeBlockElement)
+    }
   }
 
   insertNewTopBlockForCodeBlock(initCodeBlockHandler: TInitCodeBlockHandler): void {
