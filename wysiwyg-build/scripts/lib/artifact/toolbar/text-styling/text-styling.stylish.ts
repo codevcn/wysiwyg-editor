@@ -1,6 +1,5 @@
 import { ETextStylingType } from "@/enums/global-enums.js"
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
-import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
 class TextStylingStylish {
   private currentStylingType: ETextStylingType | null = null
@@ -25,10 +24,6 @@ class TextStylingStylish {
     return this.tagNamesForStyling[ETextStylingType.BOLD][0]
   }
 
-  private getAllAvailableTagNames(): string[] {
-    return Object.values(this.tagNamesForStyling).flat()
-  }
-
   private ifTagNameIsCurrentStyling(tagName: string): boolean {
     return this.getCurrentStylingTagNames().includes(tagName)
   }
@@ -45,6 +40,24 @@ class TextStylingStylish {
     return this.getCurrentStylingTagNames()[0]
   }
 
+  private ifTagNameIsHeading(tagName: string): boolean {
+    return (
+      tagName === this.tagNamesForStyling[ETextStylingType.PARAGRAPH][0] ||
+      tagName === this.tagNamesForStyling[ETextStylingType.HEADING_1][0] ||
+      tagName === this.tagNamesForStyling[ETextStylingType.HEADING_2][0] ||
+      tagName === this.tagNamesForStyling[ETextStylingType.HEADING_3][0]
+    )
+  }
+
+  private ifCurrentStylingTypeIsHeading(): boolean {
+    return (
+      this.currentStylingType === ETextStylingType.PARAGRAPH ||
+      this.currentStylingType === ETextStylingType.HEADING_1 ||
+      this.currentStylingType === ETextStylingType.HEADING_2 ||
+      this.currentStylingType === ETextStylingType.HEADING_3
+    )
+  }
+
   /**
    * Lấy thẻ <styling tag> gần nhất chứa đầy đủ vùng bôi đen (đã check lại rồi, chuẩn rồi).
    */
@@ -52,90 +65,17 @@ class TextStylingStylish {
     const startContainer = selectionRange.startContainer
     const node = startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : startContainer
     if (!node || !(node instanceof HTMLElement)) return
-    this.parentStylingElement = CodeVCNEditorHelper.getClosestElementOfElement(
-      node,
-      (node) => this.ifTagNameIsCurrentStyling(node.tagName) && node.contains(selectionRange.endContainer)
-    )
-  }
-
-  /**
-   * Gộp 2 tag giống nhau liền kề thành 1 tag, VD: <b>Hello</b><b> World</b> => <b>Hello World</b>
-   */
-  private mergeAdjacentStyling(parent: HTMLElement): void {
-    let node = parent.firstChild as HTMLElement | null
-    while (node) {
-      const next = node.nextSibling as HTMLElement | null
-      if (
-        node.nodeType === Node.ELEMENT_NODE &&
-        next &&
-        next.nodeType === Node.ELEMENT_NODE &&
-        this.ifTagNameIsCurrentStyling(node.tagName) &&
-        node.tagName === next.tagName
-      ) {
-        // chuyển toàn bộ con của next sang node rồi xóa next
-        while (next.firstChild) node.appendChild(next.firstChild)
-        parent.removeChild(next)
-        continue // kiểm tra lại node hiện tại với phần tử kế tiếp mới
+    this.parentStylingElement = CodeVCNEditorHelper.getClosestParentOfElement(node, (node) => {
+      if (this.ifCurrentStylingTypeIsHeading()) {
+        return this.ifTagNameIsHeading(node.tagName)
+      } else {
+        return (
+          this.ifTagNameIsCurrentStyling(node.tagName) &&
+          node.contains(selectionRange.startContainer) &&
+          node.contains(selectionRange.endContainer)
+        )
       }
-      node = next
-    }
-  }
-
-  /**
-   * Hàm xử lý xóa styling tag khỏi selection.
-   */
-  private unstylingFromSelection(selectionRange: Range): void {
-    // Tìm thẻ styling tag NHỎ NHẤT bao trọn selection
-    const parentStylingElement = this.parentStylingElement
-    if (!parentStylingElement) return // selection không nằm trọn trong 1 styling tag
-
-    const doc = parentStylingElement.ownerDocument
-    const tagName = parentStylingElement.tagName // styling tag name
-
-    // Clone nội dung của 3 đoạn: trái | selection | phải (không đụng DOM gốc)
-    const clonedRange = selectionRange.cloneRange()
-
-    const leftRange = doc.createRange()
-    leftRange.setStart(parentStylingElement, 0)
-    leftRange.setEnd(clonedRange.startContainer, clonedRange.startOffset)
-
-    const rightRange = doc.createRange()
-    rightRange.setStart(clonedRange.endContainer, clonedRange.endOffset)
-    rightRange.setEnd(parentStylingElement, parentStylingElement.childNodes.length)
-
-    const leftFragment = leftRange.cloneContents()
-    const midFragment = clonedRange.cloneContents() // phần cần bỏ styling tag
-    const rightFragment = rightRange.cloneContents()
-
-    // Xây fragment thay thế, fragment này chứa: <styling tag>left</styling tag> + mid + <styling tag>right</styling tag>
-    const replacement = doc.createDocumentFragment()
-
-    if (leftFragment.hasChildNodes()) {
-      const leftElement = doc.createElement(tagName)
-      leftElement.appendChild(leftFragment)
-      replacement.appendChild(leftElement)
-    }
-
-    if (midFragment.hasChildNodes()) {
-      replacement.appendChild(midFragment) // KHÔNG bị bọc bởi styling tag
-    }
-
-    if (rightFragment.hasChildNodes()) {
-      const rightElement = doc.createElement(tagName)
-      rightElement.appendChild(rightFragment)
-      replacement.appendChild(rightElement)
-    }
-
-    // Thay thẻ cha <styling tag> cũ bằng cấu trúc mới
-    parentStylingElement.replaceWith(replacement)
-  }
-
-  private warpContentByStylingTag(selectionRange: Range): HTMLElement {
-    const content = selectionRange.extractContents()
-    const element = document.createElement(this.getCurrentStylingTagName())
-    element.appendChild(content)
-    selectionRange.insertNode(element)
-    return element
+    })
   }
 
   private findDescendantsSameTag(parent: HTMLElement): string[] {
@@ -146,6 +86,7 @@ class TextStylingStylish {
       const tagNames = this.tagNamesForStyling[stylingType as ETextStylingType]
       if (tagNames.includes(tagName)) {
         descendantTagNames.push(...tagNames)
+        break
       }
     }
     return descendantTagNames
@@ -155,48 +96,20 @@ class TextStylingStylish {
     CodeVCNEditorHelper.removeOverlapChildTags(parentStylingElement, this.findDescendantsSameTag(parentStylingElement))
   }
 
-  /**
-   * Kiểm tra xem phần tử parent có chứa text node nào ko được bọc bởi tagNameAllowed hay ko
-   * @param {HTMLElement} parent - Phần tử parent
-   */
-  private makeStylingToTextNodeOutsideTags(parent: HTMLElement): void {
-    const tagNamesAllowed = this.getAllAvailableTagNames()
-    const childNodes = parent.childNodes
-    for (const node of childNodes) {
-      if (node.nodeType === Node.TEXT_NODE) {
-        if (node.textContent!.trim() !== "") {
-          // tìm ra text node không có tag bao bọc
-          const newNode = document.createElement(this.getCurrentStylingTagName())
-          newNode.appendChild(node.cloneNode(true))
-          node.replaceWith(newNode)
-          return
-        }
-      } else if (node.nodeType === Node.ELEMENT_NODE) {
-        const el = node as HTMLElement
-        // nếu không phải tag được phép thì kiểm tra tiếp đệ quy
-        if (!tagNamesAllowed.includes(el.tagName)) {
-          this.makeStylingToTextNodeOutsideTags(el)
-        } else {
-          // nếu nằm trong tag được phép, bỏ qua đệ quy
-          continue
-        }
-      }
-    }
+  private removeEmptyChildrenRecursively(parentStylingElement: HTMLElement): void {
+    CodeVCNEditorHelper.removeEmptyChildrenRecursively(parentStylingElement)
   }
 
-  /**
-   * Xóa các tag rỗng
-   */
-  private removeEmptyTags(parent: HTMLElement): void {
-    const elements = parent.children
-    for (const element of elements) {
-      if (element.innerHTML === "") {
-        element.remove()
-        continue
-      } else if (element.hasChildNodes()) {
-        this.removeEmptyTags(element as HTMLElement)
-      }
-    }
+  private unstylingFromSelection(selectionRange: Range, parentStylingElement: HTMLElement): void {
+    CodeVCNEditorHelper.unstylingFromSelection(selectionRange, parentStylingElement)
+  }
+
+  private warpContentByStylingTag(selectionRange: Range, stylingTagName: string): HTMLElement {
+    return CodeVCNEditorHelper.warpContentByStylingTag(selectionRange, stylingTagName)
+  }
+
+  private mergeAdjacentStyling(parentStylingElement: HTMLElement): void {
+    CodeVCNEditorHelper.mergeAdjacentStyling(parentStylingElement)
   }
 
   private makeStyling(selectionRange: Range, stylingType: ETextStylingType): void {
@@ -204,14 +117,22 @@ class TextStylingStylish {
     this.setParentStylingElement(selectionRange)
 
     if (this.parentStylingElement) {
+      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(this.parentStylingElement)
       // nếu selection nằm hoàn toàn trong 1 styling tag thì xóa styling của selection
-      this.unstylingFromSelection(selectionRange)
+      this.unstylingFromSelection(selectionRange, this.parentStylingElement)
       this.mergeAdjacentStyling(this.parentStylingElement)
+      if (topBlockElement) {
+        this.removeEmptyChildrenRecursively(topBlockElement)
+      }
     } else {
       // nếu không nằm hoàn toàn trong styling tag thì bọc content bởi styling tag và xóa các tag giống styling tag
-      const parentStylingElement = this.warpContentByStylingTag(selectionRange)
+      const parentStylingElement = this.warpContentByStylingTag(selectionRange, this.getCurrentStylingTagName())
       this.removeOverlapChildTags(parentStylingElement)
       this.mergeAdjacentStyling(parentStylingElement)
+      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(parentStylingElement)
+      if (topBlockElement) {
+        this.removeEmptyChildrenRecursively(topBlockElement)
+      }
     }
   }
 

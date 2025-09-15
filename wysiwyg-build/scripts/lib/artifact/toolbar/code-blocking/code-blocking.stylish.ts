@@ -55,47 +55,33 @@ class CodeBlockingStylish {
     return inlineCodeBlockElement
   }
 
-  private wrapRangeContentByInlineCodeBlock(
-    range: Range,
-    language: ECodeBlockingLanguage = ECodeBlockingLanguage.CPP
-  ): HTMLElement {
-    const content = range.extractContents()
-    const inlineCodeBlockElement = this.createNewInlineCodeBlockElement(language)
-    inlineCodeBlockElement.appendChild(content)
-    range.insertNode(inlineCodeBlockElement)
-    return inlineCodeBlockElement
+  private checkIfSelectionIsInsideCodeBlock(selection: Selection): boolean {
+    let startContainer: Node | null = selection.getRangeAt(0).startContainer
+    if (startContainer?.nodeType === Node.TEXT_NODE) {
+      startContainer = startContainer.parentElement
+    }
+    if (!startContainer || !(startContainer instanceof HTMLElement)) return false
+    return !!CodeVCNEditorHelper.getClosestParentOfElement(
+      startContainer,
+      (node) => node.tagName === this.codeBlockBoxElementTagName
+    )
   }
 
-  private wrapSelectionByInlineCodeBlock(
-    selection: Selection,
-    language: ECodeBlockingLanguage = ECodeBlockingLanguage.CPP
+  private highlightCodeBlockAfterWrapping(
+    wrapperAfter: HTMLElement | undefined,
+    wrapperBefore: HTMLElement | undefined | null,
+    relatedTopBlocks: HTMLElement[] | undefined
   ): void {
-    const topBlocks = CodeVCNEditorHelper.getSelectedTopBlocks(selection)
-    if (!topBlocks) return
-    if (topBlocks.length > 1) {
-      const range = selection.getRangeAt(0)
-
-      const firstTopBlock = topBlocks[0]
-      const clonedAfterRange = range.cloneRange()
-      clonedAfterRange.setEnd(firstTopBlock, firstTopBlock.childNodes.length)
-      const inlineCodeBlockElementAfter = this.wrapRangeContentByInlineCodeBlock(clonedAfterRange, language)
-      Prism.highlightElement(inlineCodeBlockElementAfter)
-
-      const lastTopBlock = topBlocks[topBlocks.length - 1]
-      const clonedBeforeRange = range.cloneRange()
-      clonedBeforeRange.setStart(lastTopBlock, 0)
-      const inlineCodeBlockElementBefore = this.wrapRangeContentByInlineCodeBlock(clonedBeforeRange, language)
-      Prism.highlightElement(inlineCodeBlockElementBefore)
-
-      const otherTopBlocks = topBlocks.slice(1, topBlocks.length - 1)
-      for (const topBlock of otherTopBlocks) {
-        const inlineCodeBlockElement = this.createNewInlineCodeBlockElement(language)
-        CodeVCNEditorHelper.wrapElementContentsByEmptyElement(topBlock, inlineCodeBlockElement)
-        Prism.highlightElement(inlineCodeBlockElement)
+    if (wrapperAfter) {
+      Prism.highlightElement(wrapperAfter)
+    }
+    if (wrapperBefore) {
+      Prism.highlightElement(wrapperBefore)
+    }
+    if (relatedTopBlocks && relatedTopBlocks.length > 0) {
+      for (const topBlock of relatedTopBlocks) {
+        Prism.highlightElement(topBlock)
       }
-    } else if (topBlocks.length === 1) {
-      const inlineCodeBlockElement = this.wrapRangeContentByInlineCodeBlock(selection.getRangeAt(0), language)
-      Prism.highlightElement(inlineCodeBlockElement)
     }
   }
 
@@ -108,7 +94,15 @@ class CodeBlockingStylish {
       throw EditorInternalErrorHelper.createError(EErrorMessage.SELECTION_NOT_FOUND_AFTER_RESTORE)
     }
     if (CodeVCNEditorHelper.isSelectingContent()) {
-      this.wrapSelectionByInlineCodeBlock(selection)
+      if (this.checkIfSelectionIsInsideCodeBlock(selection)) {
+        return
+      } else {
+        const result = CodeVCNEditorHelper.wrapSelectionInMultipleLinesByWrapper(
+          selection,
+          this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP)
+        )
+        this.highlightCodeBlockAfterWrapping(result?.wrapperAfter, result?.wrapperBefore, result?.relatedTopBlocks)
+      }
     } else {
       const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
       if (topBlockElement) {

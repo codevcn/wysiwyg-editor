@@ -6,6 +6,12 @@ type TIsEmptyTopBlockResult = {
   isEmpty: boolean
 }
 
+type TWrapSelectionInMultipleLinesByWrapperResult = {
+  wrapperAfter: HTMLElement
+  wrapperBefore: HTMLElement | null
+  relatedTopBlocks: HTMLElement[]
+}
+
 export class CodeVCNEditorHelper {
   static readonly topBlockElementTagName: string = "SECTION"
   private static savedCaretPosition: Range | null = null
@@ -56,7 +62,7 @@ export class CodeVCNEditorHelper {
     return newBlock
   }
 
-  static getClosestElementOfElement<TElementType extends HTMLElement = HTMLElement>(
+  static getClosestParentOfElement<TElementType extends HTMLElement = HTMLElement>(
     startNode: HTMLElement,
     selector: (node: HTMLElement) => boolean
   ): TElementType | null {
@@ -457,5 +463,144 @@ export class CodeVCNEditorHelper {
   static wrapElementContentsByEmptyElement(element: HTMLElement, emptyElement: HTMLElement): void {
     emptyElement.append(...element.childNodes)
     element.replaceChildren(emptyElement)
+  }
+
+  static removeEmptyChildrenRecursively(parent: HTMLElement): void {
+    if (!parent || !(parent instanceof HTMLElement)) return
+
+    // Duyệt tất cả con từ dưới lên để tránh mất tham chiếu khi xóa
+    const children = Array.from(parent.children) as HTMLElement[]
+    for (const child of children) {
+      this.removeEmptyChildrenRecursively(child)
+
+      // Nếu element con hoàn toàn không có text (sau khi duyệt cả con cháu)
+      if (child.textContent?.length === 0) {
+        child.remove()
+      }
+    }
+  }
+
+  /**
+   * Hàm xử lý xóa styling tag khỏi selection.
+   */
+  static unstylingFromSelection(selectionRange: Range, parentStylingElement: HTMLElement): void {
+    // Tìm thẻ styling tag NHỎ NHẤT bao trọn selection
+    const doc = parentStylingElement.ownerDocument
+    const tagName = parentStylingElement.tagName // styling tag name
+
+    // Clone nội dung của 3 đoạn: trái | selection | phải (không đụng DOM gốc)
+    const clonedRange = selectionRange.cloneRange()
+
+    const leftRange = doc.createRange()
+    leftRange.setStart(parentStylingElement, 0)
+    leftRange.setEnd(clonedRange.startContainer, clonedRange.startOffset)
+
+    const rightRange = doc.createRange()
+    rightRange.setStart(clonedRange.endContainer, clonedRange.endOffset)
+    rightRange.setEnd(parentStylingElement, parentStylingElement.childNodes.length)
+
+    const leftFragment = leftRange.cloneContents()
+    const midFragment = clonedRange.cloneContents() // phần cần bỏ styling tag
+    const rightFragment = rightRange.cloneContents()
+
+    // Xây fragment thay thế, fragment này chứa: <styling tag>left</styling tag> + mid + <styling tag>right</styling tag>
+    const replacement = doc.createDocumentFragment()
+
+    if (leftFragment.hasChildNodes()) {
+      const leftElement = doc.createElement(tagName)
+      leftElement.appendChild(leftFragment)
+      replacement.appendChild(leftElement)
+    }
+
+    if (midFragment.hasChildNodes()) {
+      replacement.appendChild(midFragment) // KHÔNG bị bọc bởi styling tag
+    }
+
+    if (rightFragment.hasChildNodes()) {
+      const rightElement = doc.createElement(tagName)
+      rightElement.appendChild(rightFragment)
+      replacement.appendChild(rightElement)
+    }
+
+    // Thay thẻ cha <styling tag> cũ bằng cấu trúc mới
+    parentStylingElement.replaceWith(replacement)
+  }
+
+  static warpContentByStylingTag(selectionRange: Range, stylingTagName: string): HTMLElement {
+    const content = selectionRange.extractContents()
+    const element = document.createElement(stylingTagName)
+    element.className = crypto.randomUUID()
+    element.appendChild(content)
+    selectionRange.insertNode(element)
+    return element
+  }
+
+  /**
+   * Gộp 2 tag giống nhau liền kề thành 1 tag, VD: <b>Hello</b><b> World</b> => <b>Hello World</b>
+   */
+  static mergeAdjacentStyling(parent: HTMLElement): void {
+    let node = parent.firstChild as HTMLElement | null
+    while (node) {
+      const next = node.nextSibling as HTMLElement | null
+      if (
+        node.nodeType === Node.ELEMENT_NODE &&
+        next &&
+        next.nodeType === Node.ELEMENT_NODE &&
+        node.tagName === next.tagName
+      ) {
+        // chuyển toàn bộ con của next sang node rồi xóa next
+        while (next.firstChild) node.appendChild(next.firstChild)
+        parent.removeChild(next)
+        continue // kiểm tra lại node hiện tại với phần tử kế tiếp mới
+      }
+      node = next
+    }
+  }
+
+  static wrapRangeContentByTag(range: Range, wrapper: HTMLElement): HTMLElement {
+    const content = range.extractContents()
+    const clonedWrapper = wrapper.cloneNode() as HTMLElement
+    clonedWrapper.appendChild(content)
+    range.insertNode(clonedWrapper)
+    return clonedWrapper
+  }
+
+  static wrapSelectionInMultipleLinesByWrapper(
+    selection: Selection,
+    wrapper: HTMLElement
+  ): TWrapSelectionInMultipleLinesByWrapperResult | null {
+    const topBlocks = this.getSelectedTopBlocks(selection)
+    if (!topBlocks) return null
+    if (topBlocks.length > 1) {
+      const range = selection.getRangeAt(0)
+
+      const firstTopBlock = topBlocks[0]
+      const clonedAfterRange = range.cloneRange()
+      clonedAfterRange.setEnd(firstTopBlock, firstTopBlock.childNodes.length)
+      const wrapperAfter = this.wrapRangeContentByTag(clonedAfterRange, wrapper)
+
+      const lastTopBlock = topBlocks[topBlocks.length - 1]
+      const clonedBeforeRange = range.cloneRange()
+      clonedBeforeRange.setStart(lastTopBlock, 0)
+      const wrapperBefore = this.wrapRangeContentByTag(clonedBeforeRange, wrapper)
+
+      const otherTopBlocks = topBlocks.slice(1, topBlocks.length - 1)
+      for (const topBlock of otherTopBlocks) {
+        this.wrapElementContentsByEmptyElement(topBlock, wrapper.cloneNode() as HTMLElement)
+      }
+
+      return {
+        wrapperAfter,
+        wrapperBefore,
+        relatedTopBlocks: topBlocks,
+      }
+    } else if (topBlocks.length === 1) {
+      return {
+        wrapperAfter: this.wrapRangeContentByTag(selection.getRangeAt(0), wrapper),
+        wrapperBefore: null,
+        relatedTopBlocks: topBlocks,
+      }
+    }
+    return null
   }
 }

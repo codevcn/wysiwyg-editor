@@ -69,7 +69,7 @@ export const DropdownTrigger = ({
       data-action=${action}
     >
       <button
-        class="NAME-dropdown-btn flex items-center px-2 py-1 leading-none rounded hover:bg-gray-200 cursor-pointer h-full ${classNames?.btn ||
+        class="NAME-dropdown-btn flex items-center leading-none rounded hover:bg-gray-200 cursor-pointer h-full ${classNames?.btn ||
         ""}"
       >
         ${unsafeHTML(label)}

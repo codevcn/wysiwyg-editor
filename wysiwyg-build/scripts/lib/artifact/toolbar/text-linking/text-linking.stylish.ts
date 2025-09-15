@@ -54,7 +54,7 @@ class TextLinkingStylish {
     if (anchorNode.tagName === this.linkTagName) {
       return anchorNode as HTMLAnchorElement
     }
-    return CodeVCNEditorHelper.getClosestElementOfElement<HTMLAnchorElement>(
+    return CodeVCNEditorHelper.getClosestParentOfElement<HTMLAnchorElement>(
       anchorNode,
       (element) => element.tagName === this.linkTagName
     )
