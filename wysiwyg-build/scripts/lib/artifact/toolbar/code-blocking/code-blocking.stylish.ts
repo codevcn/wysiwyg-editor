@@ -70,7 +70,7 @@ class CodeBlockingStylish {
   private highlightCodeBlockAfterWrapping(
     wrapperAfter: HTMLElement | undefined,
     wrapperBefore: HTMLElement | undefined | null,
-    relatedTopBlocks: HTMLElement[] | undefined
+    topBlocks: HTMLElement[] | undefined
   ): void {
     if (wrapperAfter) {
       Prism.highlightElement(wrapperAfter)
@@ -78,8 +78,8 @@ class CodeBlockingStylish {
     if (wrapperBefore) {
       Prism.highlightElement(wrapperBefore)
     }
-    if (relatedTopBlocks && relatedTopBlocks.length > 0) {
-      for (const topBlock of relatedTopBlocks) {
+    if (topBlocks && topBlocks.length > 0) {
+      for (const topBlock of topBlocks) {
         Prism.highlightElement(topBlock)
       }
     }
@@ -99,9 +99,15 @@ class CodeBlockingStylish {
       } else {
         const result = CodeVCNEditorHelper.wrapSelectionInMultipleLinesByWrapper(
           selection,
-          this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP)
+          this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP),
+          (range) => {
+            return CodeVCNEditorHelper.wrapRangeContentByTag(
+              range,
+              this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP)
+            )
+          }
         )
-        this.highlightCodeBlockAfterWrapping(result?.wrapperAfter, result?.wrapperBefore, result?.relatedTopBlocks)
+        this.highlightCodeBlockAfterWrapping(result?.wrapperAfter, result?.wrapperBefore, result?.topBlocks)
       }
     } else {
       const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)

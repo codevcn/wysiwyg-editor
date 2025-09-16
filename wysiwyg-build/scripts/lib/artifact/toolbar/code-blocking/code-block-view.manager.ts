@@ -78,11 +78,7 @@ export class CodeBlockViewManager {
     return cpp()
   }
 
-  private createCodeBlockBoxName(): TCodeBlockName {
-    return `name-${crypto.randomUUID()}`
-  }
-
-  private createCodeBlockParentName(): TCodeBlockName {
+  private createCodeBlockName(): TCodeBlockName {
     return `name-${crypto.randomUUID()}`
   }
 
@@ -178,12 +174,11 @@ export class CodeBlockViewManager {
     isDarkTheme: boolean
   ): TCreateCodeBlockBoxElementResult {
     const parentElement = document.createElement(this.codeBlockBoxElementTagName)
-    parentElement.dataset.codeBlockParentName = this.createCodeBlockParentName()
 
     const boxElement = document.createElement(this.codeBlockBoxElementTagName)
     boxElement.contentEditable = "false"
     boxElement.className = this.codeBlockBoxClassName + " border border-regular-border-cl rounded overflow-hidden"
-    boxElement.dataset.codeBlockBoxName = this.createCodeBlockBoxName()
+    boxElement.dataset.codeBlockBoxName = this.createCodeBlockName()
     boxElement.dataset.language = language
     boxElement.dataset.isDarkTheme = isDarkTheme.toString()
     boxElement.appendChild(

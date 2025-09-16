@@ -3,7 +3,6 @@ import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
 
 class TextStylingStylish {
   private currentStylingType: ETextStylingType | null = null
-  private parentStylingElement: HTMLElement | null = null
   /**
    * Tên các thẻ styling cho từng loại styling (index theo thứ tự ưu tiên, 0 là ưu tiên nhất rồi đến 1, 2, 3, ...)
    */
@@ -58,90 +57,47 @@ class TextStylingStylish {
     )
   }
 
-  /**
-   * Lấy thẻ <styling tag> gần nhất chứa đầy đủ vùng bôi đen (đã check lại rồi, chuẩn rồi).
-   */
-  private setParentStylingElement(selectionRange: Range): void {
-    const startContainer = selectionRange.startContainer
-    const node = startContainer.nodeType === Node.TEXT_NODE ? startContainer.parentElement : startContainer
-    if (!node || !(node instanceof HTMLElement)) return
-    this.parentStylingElement = CodeVCNEditorHelper.getClosestParentOfElement(node, (node) => {
-      if (this.ifCurrentStylingTypeIsHeading()) {
-        return this.ifTagNameIsHeading(node.tagName)
-      } else {
-        return (
-          this.ifTagNameIsCurrentStyling(node.tagName) &&
-          node.contains(selectionRange.startContainer) &&
-          node.contains(selectionRange.endContainer)
-        )
-      }
-    })
+  private createNewStylingTagElement(): HTMLElement {
+    return document.createElement(this.getCurrentStylingTagName())
   }
 
-  private findDescendantsSameTag(parent: HTMLElement): string[] {
-    const tagName = parent.tagName
-    // liệt kê tất cả các tagName cùng loại với tagName của parent
-    const descendantTagNames: string[] = []
-    for (const stylingType in this.tagNamesForStyling) {
-      const tagNames = this.tagNamesForStyling[stylingType as ETextStylingType]
-      if (tagNames.includes(tagName)) {
-        descendantTagNames.push(...tagNames)
-        break
-      }
-    }
-    return descendantTagNames
-  }
-
-  private removeOverlapChildTags(parentStylingElement: HTMLElement): void {
-    CodeVCNEditorHelper.removeOverlapChildTags(parentStylingElement, this.findDescendantsSameTag(parentStylingElement))
-  }
-
-  private removeEmptyChildrenRecursively(parentStylingElement: HTMLElement): void {
-    CodeVCNEditorHelper.removeEmptyChildrenRecursively(parentStylingElement)
-  }
-
-  private unstylingFromSelection(selectionRange: Range, parentStylingElement: HTMLElement): void {
-    CodeVCNEditorHelper.unstylingFromSelection(selectionRange, parentStylingElement)
-  }
-
-  private warpContentByStylingTag(selectionRange: Range, stylingTagName: string): HTMLElement {
-    return CodeVCNEditorHelper.warpContentByStylingTag(selectionRange, stylingTagName)
-  }
-
-  private mergeAdjacentStyling(parentStylingElement: HTMLElement): void {
-    CodeVCNEditorHelper.mergeAdjacentStyling(parentStylingElement)
-  }
-
-  private makeStyling(selectionRange: Range, stylingType: ETextStylingType): void {
+  private makeStyling(selection: Selection, stylingType: ETextStylingType): void {
     this.setCurrentStylingType(stylingType)
-    this.setParentStylingElement(selectionRange)
 
-    if (this.parentStylingElement) {
-      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(this.parentStylingElement)
-      // nếu selection nằm hoàn toàn trong 1 styling tag thì xóa styling của selection
-      this.unstylingFromSelection(selectionRange, this.parentStylingElement)
-      this.mergeAdjacentStyling(this.parentStylingElement)
-      if (topBlockElement) {
-        this.removeEmptyChildrenRecursively(topBlockElement)
-      }
-    } else {
-      // nếu không nằm hoàn toàn trong styling tag thì bọc content bởi styling tag và xóa các tag giống styling tag
-      const parentStylingElement = this.warpContentByStylingTag(selectionRange, this.getCurrentStylingTagName())
-      this.removeOverlapChildTags(parentStylingElement)
-      this.mergeAdjacentStyling(parentStylingElement)
-      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(parentStylingElement)
-      if (topBlockElement) {
-        this.removeEmptyChildrenRecursively(topBlockElement)
-      }
-    }
+    CodeVCNEditorHelper.handleWrappingSelectionInMultipleLines(selection, (range) => {
+      CodeVCNEditorHelper.wrapUnwrapRangeByWrapper(
+        range,
+        this.createNewStylingTagElement(),
+        (range) =>
+          CodeVCNEditorHelper.checkIfRangeIsInsideWrapper(range, (element) => {
+            if (this.ifCurrentStylingTypeIsHeading()) {
+              return this.ifTagNameIsHeading(element.tagName)
+            } else {
+              return (
+                this.ifTagNameIsCurrentStyling(element.tagName) &&
+                element.contains(range.startContainer) &&
+                element.contains(range.endContainer)
+              )
+            }
+          }),
+        (container, type) => {
+          if (type === "unwrap") {
+            CodeVCNEditorHelper.removeEmptyChildrenRecursively(container)
+            CodeVCNEditorHelper.mergeAdjacentStyling(container)
+          } else {
+            CodeVCNEditorHelper.removeOverlapChildTags(container, this.getCurrentStylingTagNames())
+            CodeVCNEditorHelper.removeEmptyChildrenRecursively(container)
+            CodeVCNEditorHelper.mergeAdjacentStyling(container)
+          }
+        }
+      )
+    })
   }
 
   onAction(stylingType: ETextStylingType): void {
     const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
     if (!selection) return
-    const range = selection.getRangeAt(0)
-    if (range.collapsed) return
-    this.makeStyling(range, stylingType)
+    this.makeStyling(selection, stylingType)
   }
 }
 
