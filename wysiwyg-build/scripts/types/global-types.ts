@@ -40,6 +40,8 @@ export type TCheckIfRangeIsInsideWrapper = (selectionRange: Range) => HTMLElemen
 
 export type TWrapperSelector = (node: HTMLElement) => boolean
 
-export type TCleanUpElementsHandler = (container: HTMLElement, type: "unwrap" | "wrap") => void
+export type TWrappingType = "unwrap" | "wrap"
 
-export type THandleEachRangeHandler = (range: Range) => void
+export type TCleanUpElementsHandler = (container: HTMLElement, type: TWrappingType, isForceToUnwrap?: boolean) => void
+
+export type THandleEachRangeHandler = (range: Range, wrappingType: TWrappingType) => void

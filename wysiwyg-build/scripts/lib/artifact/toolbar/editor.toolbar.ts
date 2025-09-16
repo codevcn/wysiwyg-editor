@@ -6,6 +6,7 @@ import { imageBlockingModule } from "./image-blocking/image-blocking.module.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { textLinkingModule } from "./text-linking/text-linking.module.js"
 import { codeBlockingModule } from "./code-blocking/code-blocking.module.js"
+import { textHeadingModule } from "./text-heading/text-heading.module.js"
 
 class EditorToolbar {
   private toolbarElement: HTMLElement
@@ -13,7 +14,12 @@ class EditorToolbar {
 
   constructor() {
     this.toolbarElement = this.createToolbarElement()
+    this.registerModules()
+  }
+
+  private registerModules() {
     this.toolbarElement.appendChild(textStylingModule.getSectionElement())
+    this.toolbarElement.appendChild(textHeadingModule.getSectionElement())
     this.toolbarElement.appendChild(textListingModule.getSectionElement())
     this.toolbarElement.appendChild(blockquoteModule.getSectionElement())
     this.toolbarElement.appendChild(imageBlockingModule.getSectionElement())

@@ -1,36 +1,55 @@
 import { html } from "lit-html"
 import { ToolbarButton } from "../toolbar-button.js"
 import { repeat } from "lit-html/directives/repeat.js"
-import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
-import { textStylingStylish } from "./text-styling.stylish.js"
-import { ETextStylingType, EToolbarAction } from "@/enums/global-enums.js"
+import { textHeadingStylish } from "./text-heading.stylish.js"
+import { ETextHeadingType, EToolbarAction } from "@/enums/global-enums.js"
 import type { TToolbarAction } from "@/types/global-types.js"
 import { DropdownManager } from "@/lib/components/managers/dropdown.manager.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { DropdownTrigger } from "@/lib/components/dropdown.js"
 
-class TextStylingModule {
+class TextHeadingModule {
   private sectionElement: HTMLElement
   private actions: TToolbarAction[] = [
     {
-      action: EToolbarAction.BOLD,
-      label: "B",
-      className: "font-bold",
-    },
-    {
-      action: EToolbarAction.ITALIC,
-      label: "I",
-      className: "italic font-mono text-lg",
-    },
-    {
-      action: EToolbarAction.UNDERLINE,
-      label: "U",
-      className: "underline",
-    },
-    {
-      action: EToolbarAction.STRIKE_THROUGH,
-      label: "S",
-      className: "line-through",
+      action: EToolbarAction.RESIZE,
+      label: `
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="#000000" height="18" width="18">
+          <g data-name="Layer_2">
+            <g data-name="invisible_box">
+              <rect width="26" height="26" fill="none"></rect>
+            </g>
+            <g data-name="Q3_icons">
+              <g>
+                <polygon points="2 23 9 23 9 43 15 43 15 23 22 23 22 17 2 17 2 23"></polygon>
+                <polygon points="46 5 14 5 14 11 27 11 27 43 33 43 33 11 46 11 46 5"></polygon>
+              </g>
+            </g>
+          </g>
+        </svg>`,
+      className: "text-2xl font-bold",
+      options: [
+        {
+          value: ETextHeadingType.PARAGRAPH,
+          label: "Paragraph",
+          className: "text-base",
+        },
+        {
+          value: ETextHeadingType.HEADING_1,
+          label: "H1",
+          className: "text-2xl font-bold",
+        },
+        {
+          value: ETextHeadingType.HEADING_2,
+          label: "H2",
+          className: "text-xl font-bold",
+        },
+        {
+          value: ETextHeadingType.HEADING_3,
+          label: "H3",
+          className: "text-lg font-bold",
+        },
+      ],
     },
   ]
 
@@ -45,7 +64,7 @@ class TextStylingModule {
 
   private createSectionElement(): HTMLElement {
     const Renderer = () =>
-      html`<div class="NAME-text-styling-section flex gap-2">
+      html`<div class="NAME-text-heading-section flex gap-2">
         ${repeat(
           this.actions,
           ({ action }) => action,
@@ -57,12 +76,7 @@ class TextStylingModule {
                   classNames: { btn: className },
                   initialValue: options?.[0]?.value || "",
                 })
-              : html`<button
-                  class="NAME-toolbar-btn flex items-center px-2 py-1 leading-none rounded hover:bg-gray-200 cursor-pointer ${className}"
-                  data-action="${action}"
-                >
-                  ${unsafeHTML(label)}
-                </button>`
+              : ""
         )}
       </div>`
     return LitHTMLHelper.createElementFromRenderer(Renderer, [])
@@ -71,9 +85,9 @@ class TextStylingModule {
   private bindButtonEvents() {
     const buttons = this.sectionElement.querySelectorAll<HTMLElement>(".NAME-toolbar-btn")
     buttons.forEach((btn) => {
-      const tb = new ToolbarButton<ETextStylingType>(btn)
+      const tb = new ToolbarButton<ETextHeadingType>(btn)
       tb.onClick((action) => {
-        this.onAction(action as ETextStylingType)
+        this.onAction(action as ETextHeadingType)
       })
     })
   }
@@ -89,7 +103,7 @@ class TextStylingModule {
           },
         ],
         (activeValue) => {
-          this.onAction(activeValue as ETextStylingType)
+          this.onAction(activeValue as ETextHeadingType)
         }
       )
     }
@@ -100,11 +114,11 @@ class TextStylingModule {
     this.bindDropdownEvents()
   }
 
-  private onAction(stylingType: ETextStylingType) {
+  private onAction(headingType: ETextHeadingType) {
     queueMicrotask(() => {
-      textStylingStylish.onAction(stylingType)
+      textHeadingStylish.onAction(headingType)
     })
   }
 }
 
-export const textStylingModule = new TextStylingModule()
+export const textHeadingModule = new TextHeadingModule()

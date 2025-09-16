@@ -5,8 +5,8 @@ import type {
   TCleanUpElementsHandler,
   THandleEachRangeHandler,
   TWrapperSelector,
+  TWrappingType,
 } from "@/types/global-types"
-import { logRangeContents, logRangeFragment } from "@/dev/helpers"
 
 type TIsEmptyTopBlockResult = {
   topBlockElement: HTMLElement | null
@@ -428,24 +428,29 @@ export class CodeVCNEditorHelper {
     }, 2000)
   }
 
+  static getTopBlockFromSelectionRange(selectionRange: Range): HTMLElement | null {
+    let startContainer = selectionRange.startContainer
+    if (!(startContainer instanceof HTMLElement)) {
+      startContainer = startContainer.parentElement!
+    }
+    return this.getTopBlockElementFromElement(startContainer as HTMLElement)
+  }
+
   /**
    * Lấy ra tất cả các top block được bôi đen (selected) trong editor.
    * @returns HTMLElement[] | null - Mảng các top block được bôi đen, hoặc null nếu không bôi đen
    */
-  static getSelectedTopBlocks(selection: Selection): HTMLElement[] | null {
-    if (selection.isCollapsed) return null
-    if (selection.rangeCount === 0) return null
+  static getSelectedTopBlocksFromRange(selectionRange: Range): HTMLElement[] | null {
+    if (selectionRange.collapsed) return null
 
-    let currentTopBlockElement = this.getTopBlockElementFromSelection(selection)
+    let currentTopBlockElement = this.getTopBlockFromSelectionRange(selectionRange)
     if (!currentTopBlockElement) return null
-
-    const range = selection.getRangeAt(0)
 
     const topBlocks: HTMLElement[] = []
     while (
       currentTopBlockElement &&
       currentTopBlockElement.tagName === this.topBlockElementTagName &&
-      range.intersectsNode(currentTopBlockElement)
+      selectionRange.intersectsNode(currentTopBlockElement)
     ) {
       topBlocks.push(currentTopBlockElement)
       currentTopBlockElement = this.getNextTopBlockElementFromCurrentTopBlock(currentTopBlockElement)
@@ -496,10 +501,13 @@ export class CodeVCNEditorHelper {
     }
   }
 
-  static removeOverlapChildTags(parent: HTMLElement, descendantTagNames: string[]): void {
-    const descendants = parent.querySelectorAll<HTMLElement>(descendantTagNames.join(","))
+  static removeOverlapChildTags(parent: HTMLElement, tagNamesToRemove: string[], removeParentTag?: boolean): void {
+    const descendants = parent.querySelectorAll<HTMLElement>(tagNamesToRemove.join(","))
     for (const descendant of descendants) {
       descendant.replaceWith(...descendant.childNodes)
+    }
+    if (removeParentTag && tagNamesToRemove.includes(parent.tagName)) {
+      parent.replaceWith(...parent.childNodes)
     }
   }
 
@@ -507,10 +515,10 @@ export class CodeVCNEditorHelper {
    * Gộp 2 tag giống nhau liền kề thành 1 tag, VD: <b>Hello</b><b> World</b> => <b>Hello World</b>
    */
   static mergeAdjacentStyling(parent: HTMLElement): void {
-    let node = parent.firstElementChild
+    let node = parent.firstChild
     while (node) {
-      const next = node.nextElementSibling
-      if (next && node.tagName === next.tagName) {
+      const next = node.nextSibling
+      if (node instanceof HTMLElement && next instanceof HTMLElement && node.tagName === next.tagName) {
         // chuyển toàn bộ con của next sang node rồi xóa next
         while (next.firstChild) node.appendChild(next.firstChild)
         parent.removeChild(next)
@@ -523,7 +531,11 @@ export class CodeVCNEditorHelper {
   /**
    * Hàm xử lý xóa styling tag khỏi selection.
    */
-  static unwrapRangeContentByTag(selectionRange: Range, parentElement: HTMLElement): void {
+  static unwrapRangeContentByTag(
+    selectionRange: Range,
+    parentElement: HTMLElement,
+    contentWrapper?: HTMLElement
+  ): void {
     // Tìm thẻ styling tag NHỎ NHẤT bao trọn selection
     const doc = parentElement.ownerDocument
     const tagName = parentElement.tagName // styling tag name
@@ -553,7 +565,13 @@ export class CodeVCNEditorHelper {
     }
 
     if (midFragment.hasChildNodes()) {
-      replacement.appendChild(midFragment) // KHÔNG bị bọc bởi styling tag
+      // KHÔNG bị bọc bởi styling tag
+      if (contentWrapper) {
+        contentWrapper.appendChild(midFragment)
+        replacement.appendChild(contentWrapper)
+      } else {
+        replacement.appendChild(midFragment)
+      }
     }
 
     if (rightFragment.hasChildNodes()) {
@@ -575,10 +593,8 @@ export class CodeVCNEditorHelper {
   }
 
   static checkIfRangeIsInsideWrapper(selectionRange: Range, wrapperSelector: TWrapperSelector): HTMLElement | null {
-    logRangeContents(">>> selectionRange:", selectionRange)
     let anchorNode = selectionRange.startContainer
-    console.log(">>> anchorNode:", anchorNode)
-    if (anchorNode.nodeType !== Node.ELEMENT_NODE) {
+    if (!(anchorNode instanceof HTMLElement)) {
       anchorNode = anchorNode.parentElement!
     }
     return this.getClosestParentOfElement(anchorNode as HTMLElement, wrapperSelector)
@@ -587,50 +603,69 @@ export class CodeVCNEditorHelper {
   static wrapUnwrapRangeByWrapper(
     selectionRange: Range,
     wrapper: HTMLElement,
+    wrappingType: TWrappingType,
     checkIfRangeIsInsideWrapper: TCheckIfRangeIsInsideWrapper,
     cleanUpElements: TCleanUpElementsHandler
   ): void {
-    const parentElement = checkIfRangeIsInsideWrapper(selectionRange)
-    if (parentElement) {
-      console.log(">>> wrap unwrap 1:", parentElement)
-      const container = parentElement.parentElement
-      if (container && container instanceof HTMLElement) {
-        this.unwrapRangeContentByTag(selectionRange, parentElement)
-        cleanUpElements(container, "unwrap")
+    if (wrappingType === "unwrap") {
+      const parentElement = checkIfRangeIsInsideWrapper(selectionRange)
+      if (parentElement) {
+        const container = parentElement.parentElement
+        if (container && container instanceof HTMLElement) {
+          this.unwrapRangeContentByTag(selectionRange, parentElement)
+          cleanUpElements(container, wrappingType)
+        }
+      } else {
+        let container = selectionRange.startContainer
+        if (!(container instanceof HTMLElement)) {
+          container = container.parentElement!
+        }
+        cleanUpElements(container as HTMLElement, wrappingType, true)
       }
     } else {
-      console.log(">>> wrap unwrap 2")
+      if (checkIfRangeIsInsideWrapper(selectionRange)) return
       const parentElement = this.wrapRangeContentByTag(selectionRange, wrapper)
-      cleanUpElements(parentElement, "wrap")
+      cleanUpElements(parentElement, wrappingType)
     }
   }
 
   static handleWrappingSelectionInMultipleLines(
     selection: Selection,
+    tagNamesForWrapping: string[],
     handleEachRange: THandleEachRangeHandler
   ): HTMLElement[] | null {
-    const topBlocks = this.getSelectedTopBlocks(selection)
+    if (selection.rangeCount === 0) return null
+    const topBlocks = this.getSelectedTopBlocksFromRange(selection.getRangeAt(0))
     if (!topBlocks) return null
     if (topBlocks.length > 1) {
       const rootRange = selection.getRangeAt(0)
 
       const firstTopBlock = topBlocks[0]
-      const clonedBeforeRange = rootRange.cloneRange()
+      const clonedFirstRange = rootRange.cloneRange()
       const lastTextNode = this.getLastTextNodeFromNode(firstTopBlock)
+      let wrappingType: TWrappingType = "wrap"
       if (lastTextNode) {
-        clonedBeforeRange.setEnd(lastTextNode, lastTextNode.nodeValue?.length || 0)
-        handleEachRange(clonedBeforeRange)
+        const startContainer = rootRange.startContainer
+        const closestWrapper = this.checkIfRangeIsInsideWrapper(
+          clonedFirstRange,
+          (element) => tagNamesForWrapping.includes(element.tagName) && element.contains(startContainer)
+        )
+        if (closestWrapper) {
+          wrappingType = "unwrap"
+        }
+        clonedFirstRange.setEnd(lastTextNode, lastTextNode.nodeValue?.length || 0)
+        handleEachRange(clonedFirstRange, wrappingType)
       }
 
       const lastTopBlock = topBlocks[topBlocks.length - 1]
-      const clonedAfterRange = rootRange.cloneRange()
+      const clonedLastRange = rootRange.cloneRange()
       const firstTextNode = this.getFirstTextNodeFromNode(lastTopBlock)
       if (firstTextNode) {
-        clonedAfterRange.setStart(firstTextNode, 0)
-        handleEachRange(clonedAfterRange)
+        clonedLastRange.setStart(firstTextNode, 0)
+        handleEachRange(clonedLastRange, wrappingType)
       }
 
-      const otherTopBlocks = topBlocks.slice(1, topBlocks.length - 1)
+      const otherTopBlocks = topBlocks.length > 2 ? topBlocks.slice(1, topBlocks.length - 1) : []
       for (const topBlock of otherTopBlocks) {
         const range = document.createRange()
         const firstTextNode = this.getFirstTextNodeFromNode(topBlock)
@@ -638,14 +673,17 @@ export class CodeVCNEditorHelper {
         if (firstTextNode && lastTextNode) {
           range.setStart(firstTextNode, 0)
           range.setEnd(lastTextNode, lastTextNode.nodeValue?.length || 0)
+          handleEachRange(range, wrappingType)
         }
-        handleEachRange(range)
       }
 
       return topBlocks
     } else if (topBlocks.length === 1) {
       const rootRange = selection.getRangeAt(0)
-      handleEachRange(rootRange)
+      const closestWrapper = this.checkIfRangeIsInsideWrapper(rootRange, (element) =>
+        tagNamesForWrapping.includes(element.tagName)
+      )
+      handleEachRange(rootRange, closestWrapper ? "unwrap" : "wrap")
       return topBlocks
     }
     return null

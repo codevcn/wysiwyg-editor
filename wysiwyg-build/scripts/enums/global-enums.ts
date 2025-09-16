@@ -3,10 +3,13 @@ export enum ETextStylingType {
   ITALIC = "text-styling-italic",
   UNDERLINE = "text-styling-underline",
   STRIKE_THROUGH = "text-styling-strike-through",
-  HEADING_1 = "text-sizing-heading-1",
-  HEADING_2 = "text-sizing-heading-2",
-  HEADING_3 = "text-sizing-heading-3",
-  PARAGRAPH = "text-sizing-paragraph",
+}
+
+export enum ETextHeadingType {
+  HEADING_1 = "text-heading-1",
+  HEADING_2 = "text-heading-2",
+  HEADING_3 = "text-heading-3",
+  PARAGRAPH = "text-heading-paragraph",
 }
 
 export enum ETextListingType {

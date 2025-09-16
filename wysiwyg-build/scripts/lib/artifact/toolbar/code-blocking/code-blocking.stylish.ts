@@ -1,6 +1,7 @@
 import { ECodeBlockingLanguage, EErrorMessage } from "@/enums/global-enums"
 import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
+import type { TWrappingType } from "@/types/global-types"
 import Prism from "prismjs"
 import "prismjs/components/prism-clike"
 import "prismjs/components/prism-javascript"
@@ -55,6 +56,10 @@ class CodeBlockingStylish {
     return inlineCodeBlockElement
   }
 
+  private ifTagNameIsCodeBlock(tagName: string): boolean {
+    return tagName === this.codeBlockBoxElementTagName
+  }
+
   private checkIfSelectionIsInsideCodeBlock(selection: Selection): boolean {
     let startContainer: Node | null = selection.getRangeAt(0).startContainer
     if (startContainer?.nodeType === Node.TEXT_NODE) {
@@ -85,6 +90,20 @@ class CodeBlockingStylish {
     }
   }
 
+  private cleanUpElements(container: HTMLElement, wrappingType: TWrappingType, isForceToUnwrap?: boolean): void {
+    if (wrappingType === "unwrap") {
+      if (isForceToUnwrap) {
+        CodeVCNEditorHelper.removeOverlapChildTags(container, [this.codeBlockBoxElementTagName], true)
+      }
+      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container)
+      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+    } else {
+      CodeVCNEditorHelper.removeOverlapChildTags(container, [this.codeBlockBoxElementTagName])
+      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container.parentElement || container)
+      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+    }
+  }
+
   insertNewTopBlockForCodeBlock(initCodeBlockHandler: TInitCodeBlockHandler): void {
     let selection = CodeVCNEditorHelper.restoreCaretPosition()
     if (!selection) {
@@ -94,21 +113,50 @@ class CodeBlockingStylish {
       throw EditorInternalErrorHelper.createError(EErrorMessage.SELECTION_NOT_FOUND_AFTER_RESTORE)
     }
     if (CodeVCNEditorHelper.isSelectingContent()) {
-      if (this.checkIfSelectionIsInsideCodeBlock(selection)) {
-        return
-      } else {
-        const result = CodeVCNEditorHelper.wrapSelectionInMultipleLinesByWrapper(
-          selection,
-          this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP),
-          (range) => {
-            return CodeVCNEditorHelper.wrapRangeContentByTag(
-              range,
-              this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP)
-            )
-          }
+      const topBlocks = CodeVCNEditorHelper.handleWrappingSelectionInMultipleLines(
+        selection,
+        [this.codeBlockBoxElementTagName],
+        (range, wrappingType) => {
+          CodeVCNEditorHelper.wrapUnwrapRangeByWrapper(
+            range,
+            this.createNewInlineCodeBlockElement(),
+            wrappingType,
+            (range) =>
+              CodeVCNEditorHelper.checkIfRangeIsInsideWrapper(
+                range,
+                (element) =>
+                  this.ifTagNameIsCodeBlock(element.tagName) &&
+                  element.contains(range.startContainer) &&
+                  element.contains(range.endContainer)
+              ),
+            (container, type, isForceToUnwrap) => {
+              this.cleanUpElements(container, type, isForceToUnwrap)
+            }
+          )
+        }
+      )
+      if (topBlocks) {
+        this.highlightCodeBlockAfterWrapping(
+          topBlocks[0],
+          topBlocks[topBlocks.length - 1],
+          topBlocks.slice(1, topBlocks.length - 1)
         )
-        this.highlightCodeBlockAfterWrapping(result?.wrapperAfter, result?.wrapperBefore, result?.topBlocks)
       }
+      // if (this.checkIfSelectionIsInsideCodeBlock(selection)) {
+      //   return
+      // } else {
+      //   const result = CodeVCNEditorHelper.wrapSelectionInMultipleLinesByWrapper(
+      //     selection,
+      //     this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP),
+      //     (range) => {
+      //       return CodeVCNEditorHelper.wrapRangeContentByTag(
+      //         range,
+      //         this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP)
+      //       )
+      //     }
+      //   )
+      //   this.highlightCodeBlockAfterWrapping(result?.wrapperAfter, result?.wrapperBefore, result?.topBlocks)
+      // }
     } else {
       const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
       if (topBlockElement) {
