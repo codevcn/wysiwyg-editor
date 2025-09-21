@@ -1,11 +1,12 @@
-import { ECodeBlockingLanguage, EErrorMessage } from "@/enums/global-enums"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
-import { EditorInternalErrorHelper } from "@/helpers/error-helper"
-import type { TWrappingType } from "@/types/global-types"
+import { ECodeBlockingLanguage, EErrorMessage } from "@/enums/global-enums.js"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine.js"
+import { EditorInternalErrorHelper } from "@/helpers/error-helper.js"
+import type { TWrappingType } from "@/types/global-types.js"
 import Prism from "prismjs"
 import "prismjs/components/prism-clike"
 import "prismjs/components/prism-javascript"
 import "prismjs/components/prism-python"
+import { TagWrappingEngine } from "../../engine/wrapping.engine.js"
 
 type TInitCodeBlockHandler = (selection: Selection) => void
 
@@ -27,23 +28,23 @@ class CodeBlockingStylish {
   }
 
   jumpToPreviousLineFromInsideCodeBlock(codeBlockParent: HTMLElement): void {
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(codeBlockParent)
+    const topBlockElement = CodeVCNEditorEngine.getTopBlockElementFromElement(codeBlockParent)
     if (!topBlockElement) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.TOP_BLOCK_NOT_FOUND)
     }
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0) return
-    CodeVCNEditorHelper.moveCaretToPreviousTopBlock(selection)
+    CodeVCNEditorEngine.moveCaretToPreviousTopBlock(selection)
   }
 
   jumpToNewLineFromInsideCodeBlock(codeBlockParent: HTMLElement): void {
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(codeBlockParent)
+    const topBlockElement = CodeVCNEditorEngine.getTopBlockElementFromElement(codeBlockParent)
     if (!topBlockElement) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.TOP_BLOCK_NOT_FOUND)
     }
     const selection = window.getSelection()
     if (!selection || selection.rangeCount === 0) return
-    CodeVCNEditorHelper.moveCaretToStartOfNextTopBlock(selection)
+    CodeVCNEditorEngine.moveCaretToStartOfNextTopBlock(selection)
   }
 
   private generateInlineCodeBlockClassName(language: ECodeBlockingLanguage): TInlineCodeBlockClassName {
@@ -57,35 +58,17 @@ class CodeBlockingStylish {
   }
 
   private ifTagNameIsCodeBlock(tagName: string): boolean {
-    return tagName === this.codeBlockBoxElementTagName
+    return tagName === this.inlineCodeBlockElementTagName
   }
 
-  private checkIfSelectionIsInsideCodeBlock(selection: Selection): boolean {
-    let startContainer: Node | null = selection.getRangeAt(0).startContainer
-    if (startContainer?.nodeType === Node.TEXT_NODE) {
-      startContainer = startContainer.parentElement
-    }
-    if (!startContainer || !(startContainer instanceof HTMLElement)) return false
-    return !!CodeVCNEditorHelper.getClosestParentOfElement(
-      startContainer,
-      (node) => node.tagName === this.codeBlockBoxElementTagName
-    )
+  private highlightCodeBlock(codeblockElement: HTMLElement): void {
+    Prism.highlightElement(codeblockElement)
   }
 
-  private highlightCodeBlockAfterWrapping(
-    wrapperAfter: HTMLElement | undefined,
-    wrapperBefore: HTMLElement | undefined | null,
-    topBlocks: HTMLElement[] | undefined
-  ): void {
-    if (wrapperAfter) {
-      Prism.highlightElement(wrapperAfter)
-    }
-    if (wrapperBefore) {
-      Prism.highlightElement(wrapperBefore)
-    }
-    if (topBlocks && topBlocks.length > 0) {
-      for (const topBlock of topBlocks) {
-        Prism.highlightElement(topBlock)
+  private highlightCodeBlocksInTopBlocks(topBlocks: HTMLElement[]): void {
+    for (const topBlock of topBlocks) {
+      for (const inlineCodeBlockElement of topBlock.querySelectorAll<HTMLElement>(this.inlineCodeBlockElementTagName)) {
+        this.highlightCodeBlock(inlineCodeBlockElement)
       }
     }
   }
@@ -93,36 +76,36 @@ class CodeBlockingStylish {
   private cleanUpElements(container: HTMLElement, wrappingType: TWrappingType, isForceToUnwrap?: boolean): void {
     if (wrappingType === "unwrap") {
       if (isForceToUnwrap) {
-        CodeVCNEditorHelper.removeOverlapChildTags(container, [this.codeBlockBoxElementTagName], true)
+        CodeVCNEditorEngine.removeOverlapChildTags(container, [this.inlineCodeBlockElementTagName], true)
       }
-      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container)
-      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+      CodeVCNEditorEngine.removeEmptyChildrenRecursively(container)
+      CodeVCNEditorEngine.mergeAdjacentStyling(container)
     } else {
-      CodeVCNEditorHelper.removeOverlapChildTags(container, [this.codeBlockBoxElementTagName])
-      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container.parentElement || container)
-      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+      CodeVCNEditorEngine.removeOverlapChildTags(container, [this.inlineCodeBlockElementTagName])
+      CodeVCNEditorEngine.removeEmptyChildrenRecursively(container.parentElement || container)
+      CodeVCNEditorEngine.mergeAdjacentStyling(container)
     }
   }
 
   insertNewTopBlockForCodeBlock(initCodeBlockHandler: TInitCodeBlockHandler): void {
-    let selection = CodeVCNEditorHelper.restoreCaretPosition()
+    let selection = CodeVCNEditorEngine.restoreCaretPosition()
     if (!selection) {
-      selection = CodeVCNEditorHelper.focusCaretAtEndOfEditorContent()
+      selection = CodeVCNEditorEngine.focusCaretAtEndOfEditorContent()
     }
     if (!selection) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.SELECTION_NOT_FOUND_AFTER_RESTORE)
     }
-    if (CodeVCNEditorHelper.isSelectingContent()) {
-      const topBlocks = CodeVCNEditorHelper.handleWrappingSelectionInMultipleLines(
+    if (CodeVCNEditorEngine.isSelectingContent()) {
+      const topBlocks = TagWrappingEngine.wrapSelectionInMultipleLines(
         selection,
-        [this.codeBlockBoxElementTagName],
+        [this.inlineCodeBlockElementTagName],
         (range, wrappingType) => {
-          CodeVCNEditorHelper.wrapUnwrapRangeByWrapper(
+          TagWrappingEngine.wrapUnwrapRangeByWrapper(
             range,
             this.createNewInlineCodeBlockElement(),
             wrappingType,
             (range) =>
-              CodeVCNEditorHelper.checkIfRangeIsInsideWrapper(
+              TagWrappingEngine.checkIfRangeIsInsideWrapper(
                 range,
                 (element) =>
                   this.ifTagNameIsCodeBlock(element.tagName) &&
@@ -136,32 +119,13 @@ class CodeBlockingStylish {
         }
       )
       if (topBlocks) {
-        this.highlightCodeBlockAfterWrapping(
-          topBlocks[0],
-          topBlocks[topBlocks.length - 1],
-          topBlocks.slice(1, topBlocks.length - 1)
-        )
+        this.highlightCodeBlocksInTopBlocks(topBlocks)
       }
-      // if (this.checkIfSelectionIsInsideCodeBlock(selection)) {
-      //   return
-      // } else {
-      //   const result = CodeVCNEditorHelper.wrapSelectionInMultipleLinesByWrapper(
-      //     selection,
-      //     this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP),
-      //     (range) => {
-      //       return CodeVCNEditorHelper.wrapRangeContentByTag(
-      //         range,
-      //         this.createNewInlineCodeBlockElement(ECodeBlockingLanguage.CPP)
-      //       )
-      //     }
-      //   )
-      //   this.highlightCodeBlockAfterWrapping(result?.wrapperAfter, result?.wrapperBefore, result?.topBlocks)
-      // }
     } else {
-      const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
+      const { topBlockElement, isEmpty } = CodeVCNEditorEngine.isEmptyTopBlock(selection)
       if (topBlockElement) {
         if (!isEmpty) {
-          CodeVCNEditorHelper.splitCurrentTopBlockElementAtCaret(selection, true)
+          CodeVCNEditorEngine.splitCurrentTopBlockElementAtCaret(selection, true)
         }
         initCodeBlockHandler(selection)
       }

@@ -38,6 +38,10 @@ export enum ECodeBlockingType {
   CODE_BLOCKING = "code-blocking",
 }
 
+export enum ETablePlacingType {
+  TABLE_PLACING = "table-placing",
+}
+
 export enum EToolbarAction {
   BOLD = "text-styling-bold",
   ITALIC = "text-styling-italic",
@@ -50,6 +54,7 @@ export enum EToolbarAction {
   IMAGE_BLOCKING = "image-blocking",
   TEXT_LINKING = "text-linking",
   CODE_BLOCKING = "code-blocking",
+  TABLE_PLACING = "table-placing",
 }
 
 export enum EErrorMessage {

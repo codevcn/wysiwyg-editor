@@ -1,14 +1,18 @@
 import { ETextListingType } from "@/enums/global-enums"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine.js"
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
 class TextListingStylish {
   private currentTagName: string = ""
+  private readonly bulletListTagName: string = "UL"
+  private readonly numberedListTagName: string = "OL"
+  private readonly listItemTagName: string = "LI"
 
   constructor() {}
 
   private setCurrentTagName(listingType: ETextListingType): void {
-    this.currentTagName = listingType === ETextListingType.NUMBERED_LIST ? "OL" : "UL"
+    this.currentTagName =
+      listingType === ETextListingType.NUMBERED_LIST ? this.numberedListTagName : this.bulletListTagName
   }
 
   private getClosestListLineElement(selection?: Selection | null): HTMLElement | null {
@@ -23,7 +27,7 @@ class TextListingStylish {
     }
 
     const editorContentElement = editorContent.getContentElement()
-    if (elementOfSelection.tagName === "LI") {
+    if (elementOfSelection.tagName === this.listItemTagName) {
       if (editorContentElement.contains(elementOfSelection)) {
         return elementOfSelection
       }
@@ -39,7 +43,7 @@ class TextListingStylish {
     const after = range.extractContents()
 
     // Tạo li mới
-    const newLi = document.createElement("li")
+    const newLi = document.createElement(this.listItemTagName)
     if (!after.textContent) {
       newLi.innerHTML = "<br>" // giữ caret hiển thị
     } else {
@@ -72,7 +76,7 @@ class TextListingStylish {
 
   private createNewList(...nodes: Node[]): HTMLElement {
     const list = document.createElement(this.currentTagName)
-    const line = document.createElement("li")
+    const line = document.createElement(this.listItemTagName)
     line.innerHTML = "<br>"
     if (nodes.length > 0) {
       line.replaceChildren(...nodes)
@@ -99,7 +103,7 @@ class TextListingStylish {
       }
     } else {
       const anchorNode = selection.anchorNode!
-      const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromElement(
+      const topBlockElement = CodeVCNEditorEngine.getTopBlockElementFromElement(
         anchorNode.nodeType === Node.TEXT_NODE ? (anchorNode.parentNode as HTMLElement) : (anchorNode as HTMLElement)
       )
       if (topBlockElement) {
@@ -128,7 +132,7 @@ class TextListingStylish {
   }
 
   private makeListingOnToolbarButtonClick(listingType: ETextListingType): void {
-    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
     if (!selection) return
     this.setCurrentTagName(listingType)
     this.makeListing(selection)
@@ -137,12 +141,12 @@ class TextListingStylish {
   private makeListingOnKeyboardEvent(e: KeyboardEvent): void {
     if (e.key === "Enter") {
       e.preventDefault()
-      const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+      const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
       if (!selection) return
       this.makeListing(selection)
     } else if (e.key === "Tab") {
       e.preventDefault()
-      const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+      const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
       if (!selection) return
       this.makeNestedListing(selection)
     }

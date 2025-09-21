@@ -1,3 +1,24 @@
+@mixin editor-content-table-rules {
+  $cell-padding: 4px 8px;
+  $cell-highlight-color: gray;
+  $cell-border-color: var(--vcn-table-border-cl);
+
+  border-collapse: collapse;
+  width: 100%;
+  margin: 4px 0;
+  table-layout: fixed; /* Cột chia đều bất kể nội dung */
+
+  td {
+    border: 1px solid $cell-border-color;
+    padding: $cell-padding;
+
+    &.STATE-highlight-cell {
+      outline: 2px solid $cell-highlight-color;
+      border-radius: 4px;
+    }
+  }
+}
+
 @mixin editor-content-blockquote-rules {
   border-left: 4px solid #ccc; /* đường kẻ bên trái */
   margin: 1em 0;
@@ -93,6 +114,10 @@
   a {
     cursor: pointer;
     color: var(--vcn-text-link-cl);
+  }
+
+  table {
+    @include editor-content-table-rules;
   }
 }
 

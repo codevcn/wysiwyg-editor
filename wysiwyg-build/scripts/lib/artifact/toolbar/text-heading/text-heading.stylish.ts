@@ -1,6 +1,7 @@
 import { ETextHeadingType } from "@/enums/global-enums.js"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
-import type { TWrappingType } from "@/types/global-types"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine.js"
+import type { TWrappingType } from "@/types/global-types.js"
+import { TagWrappingEngine } from "../../engine/wrapping.engine.js"
 
 class TextHeadingStylish {
   private currentHeadingType: ETextHeadingType | null = null
@@ -53,79 +54,75 @@ class TextHeadingStylish {
   private cleanUpElements(container: HTMLElement, wrappingType: TWrappingType, isForceToUnwrap?: boolean): void {
     if (wrappingType === "unwrap") {
       if (isForceToUnwrap) {
-        CodeVCNEditorHelper.removeOverlapChildTags(container, this.getAllHeadingTagNames())
+        CodeVCNEditorEngine.removeOverlapChildTags(container, this.getAllHeadingTagNames())
       }
-      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container)
-      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+      CodeVCNEditorEngine.removeEmptyChildrenRecursively(container)
+      CodeVCNEditorEngine.mergeAdjacentStyling(container)
     } else {
-      CodeVCNEditorHelper.removeOverlapChildTags(container, this.getAllHeadingTagNames())
-      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container.parentElement || container)
-      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+      CodeVCNEditorEngine.removeOverlapChildTags(container, this.getAllHeadingTagNames())
+      CodeVCNEditorEngine.removeEmptyChildrenRecursively(container.parentElement || container)
+      CodeVCNEditorEngine.mergeAdjacentStyling(container)
     }
   }
 
   private makeHeading(selection: Selection, headingType: ETextHeadingType): void {
     this.setCurrentHeadingType(headingType)
 
-    CodeVCNEditorHelper.handleWrappingSelectionInMultipleLines(
-      selection,
-      this.getAllHeadingTagNames(),
-      (range, wrappingType) => {
-        // CodeVCNEditorHelper.wrapUnwrapRangeByWrapper(
-        //   range,
-        //   this.createNewHeadingTagElement(),
-        //   wrappingType,
-        //   (range) =>
-        //     CodeVCNEditorHelper.checkIfRangeIsInsideWrapper(
-        //       range,
-        //       (element) =>
-        //         this.ifTagNameIsHeading(element.tagName) &&
-        //         element.contains(range.startContainer) &&
-        //         element.contains(range.endContainer)
-        //     ),
-        //   (container, type) => {
-        //     if (type === "unwrap") {
-        //       CodeVCNEditorHelper.removeEmptyChildrenRecursively(container)
-        //       CodeVCNEditorHelper.mergeAdjacentStyling(container)
-        //     } else {
-        //       CodeVCNEditorHelper.removeOverlapChildTags(container, this.getAllHeadingTagNames())
-        //       CodeVCNEditorHelper.removeEmptyChildrenRecursively(container.parentElement || container)
-        //       CodeVCNEditorHelper.mergeAdjacentStyling(container)
-        //     }
-        //   }
-        // )
-        const checkIfRangeIsInsideWrapper = (selectionRange: Range) =>
-          CodeVCNEditorHelper.checkIfRangeIsInsideWrapper(
-            selectionRange,
-            (element) =>
-              this.ifTagNameIsHeading(element.tagName) &&
-              element.contains(selectionRange.startContainer) &&
-              element.contains(selectionRange.endContainer)
-          )
-        const wrapper = this.createNewHeadingTagElement()
-        if (wrappingType === "unwrap") {
-          const parentElement = checkIfRangeIsInsideWrapper(range)
-          if (parentElement) {
-            if (parentElement.tagName === wrapper.tagName) return
-            const container = parentElement.parentElement
-            if (container && container instanceof HTMLElement) {
-              CodeVCNEditorHelper.unwrapRangeContentByTag(range, parentElement, wrapper)
-              this.cleanUpElements(container, wrappingType)
-            }
-          } else {
-            this.cleanUpElements(wrapper, wrappingType, true)
+    TagWrappingEngine.wrapSelectionInMultipleLines(selection, this.getAllHeadingTagNames(), (range, wrappingType) => {
+      // CodeVCNEditorEngine.wrapUnwrapRangeByWrapper(
+      //   range,
+      //   this.createNewHeadingTagElement(),
+      //   wrappingType,
+      //   (range) =>
+      //     CodeVCNEditorEngine.checkIfRangeIsInsideWrapper(
+      //       range,
+      //       (element) =>
+      //         this.ifTagNameIsHeading(element.tagName) &&
+      //         element.contains(range.startContainer) &&
+      //         element.contains(range.endContainer)
+      //     ),
+      //   (container, type) => {
+      //     if (type === "unwrap") {
+      //       CodeVCNEditorEngine.removeEmptyChildrenRecursively(container)
+      //       CodeVCNEditorEngine.mergeAdjacentStyling(container)
+      //     } else {
+      //       CodeVCNEditorEngine.removeOverlapChildTags(container, this.getAllHeadingTagNames())
+      //       CodeVCNEditorEngine.removeEmptyChildrenRecursively(container.parentElement || container)
+      //       CodeVCNEditorEngine.mergeAdjacentStyling(container)
+      //     }
+      //   }
+      // )
+      const checkIfRangeIsInsideWrapper = (selectionRange: Range) =>
+        TagWrappingEngine.checkIfRangeIsInsideWrapper(
+          selectionRange,
+          (element) =>
+            this.ifTagNameIsHeading(element.tagName) &&
+            element.contains(selectionRange.startContainer) &&
+            element.contains(selectionRange.endContainer)
+        )
+      const wrapper = this.createNewHeadingTagElement()
+      if (wrappingType === "unwrap") {
+        const parentElement = checkIfRangeIsInsideWrapper(range)
+        if (parentElement) {
+          if (parentElement.tagName === wrapper.tagName) return
+          const container = parentElement.parentElement
+          if (container && container instanceof HTMLElement) {
+            TagWrappingEngine.unwrapRangeContentByTag(range, parentElement, wrapper)
+            this.cleanUpElements(container, wrappingType)
           }
         } else {
-          if (checkIfRangeIsInsideWrapper(range)) return
-          const parentElement = CodeVCNEditorHelper.wrapRangeContentByTag(range, wrapper)
-          this.cleanUpElements(parentElement, wrappingType)
+          this.cleanUpElements(wrapper, wrappingType, true)
         }
+      } else {
+        if (checkIfRangeIsInsideWrapper(range)) return
+        const parentElement = TagWrappingEngine.wrapRangeContentByTag(range, wrapper)
+        this.cleanUpElements(parentElement, wrappingType)
       }
-    )
+    })
   }
 
   onAction(headingType: ETextHeadingType): void {
-    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
     if (!selection) return
     this.makeHeading(selection, headingType)
   }

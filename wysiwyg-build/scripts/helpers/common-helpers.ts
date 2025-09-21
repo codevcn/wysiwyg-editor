@@ -82,3 +82,29 @@ export const capitalizeWord = (word: string): string => {
   if (typeof word !== "string" || word.length === 0) return word
   return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
 }
+
+/**
+ * Thiết lập key cho mỗi phần tử trong mảng object
+ * @param array mảng cần thiết lập key
+ * @param prefix tiền tố cho key
+ * @returns mảng đã thiết lập key
+ */
+export const setupKeyIndexForObjectArray = (array: any[], prefix?: string): any[] => {
+  let keyIndex: number = 0
+  return array.map((item) => ({ ...item, key: `${prefix || "index-prefix"}-${keyIndex++}` }))
+}
+
+/**
+ * Lấy vị trí của element trong parent bằng cách đếm xem có bao nhiêu anh em đứng trước element đó
+ * @param element element cần lấy vị trí
+ * @returns vị trí của element trong parent (index bắt đầu từ 0)
+ */
+export const getElementIndexInParent = (element: HTMLElement): number => {
+  let i = 0
+  let preSiblingElement = element.previousElementSibling
+  while (preSiblingElement) {
+    i++
+    preSiblingElement = preSiblingElement.previousElementSibling
+  }
+  return i
+}

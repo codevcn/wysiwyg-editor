@@ -1,4 +1,4 @@
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine"
 import { editorContent } from "../../content/editor.content"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
 import { EErrorMessage } from "@/enums/global-enums"
@@ -39,7 +39,7 @@ class ImageBlockingStylish {
     { imgUrl, altText, height, width }: TImageProperties,
     skeletonReplacer?: TImageSkeletonReplacer
   ): void {
-    const selection = CodeVCNEditorHelper.restoreCaretPosition()
+    const selection = CodeVCNEditorEngine.restoreCaretPosition()
     if (!selection) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.SELECTION_NOT_FOUND)
     }
@@ -47,13 +47,13 @@ class ImageBlockingStylish {
       skeletonReplacer(this.createImageElement({ imgUrl, altText, height, width }))
       return
     }
-    CodeVCNEditorHelper.splitCurrentTopBlockElementAtCaret(selection, true)
-    const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
+    CodeVCNEditorEngine.splitCurrentTopBlockElementAtCaret(selection, true)
+    const { topBlockElement, isEmpty } = CodeVCNEditorEngine.isEmptyTopBlock(selection)
     if (topBlockElement) {
       if (isEmpty) {
         this.insertNewImageElement(topBlockElement, { imgUrl, altText, height, width })
       } else {
-        const newBlockElement = CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
+        const newBlockElement = CodeVCNEditorEngine.insertNewTopBlockElementAfterElement(selection, topBlockElement)
         this.insertNewImageElement(newBlockElement, { imgUrl, altText, height, width })
       }
     }
@@ -73,17 +73,17 @@ class ImageBlockingStylish {
     const pElement = document.createElement("p")
     pElement.innerHTML = "<br>"
     topBlockElement.replaceChildren(pElement, imageSkeleton)
-    CodeVCNEditorHelper.moveCaretToStartOfElement(pElement, selection, selection.getRangeAt(0))
+    CodeVCNEditorEngine.moveCaretToElement(pElement, selection, selection.getRangeAt(0))
     return imageSkeleton
   }
 
   renderImageSkeleton(height: number, width: number): TImageSkeletonReplacer {
-    const selection = CodeVCNEditorHelper.restoreCaretPosition()
+    const selection = CodeVCNEditorEngine.restoreCaretPosition()
     if (!selection) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.SELECTION_NOT_FOUND)
     }
-    CodeVCNEditorHelper.splitCurrentTopBlockElementAtCaret(selection, true)
-    const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
+    CodeVCNEditorEngine.splitCurrentTopBlockElementAtCaret(selection, true)
+    const { topBlockElement, isEmpty } = CodeVCNEditorEngine.isEmptyTopBlock(selection)
     if (!topBlockElement) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.TOP_BLOCK_NOT_FOUND)
     }
@@ -91,7 +91,7 @@ class ImageBlockingStylish {
     if (isEmpty) {
       imageSkeleton = this.insertImageSkeleton(topBlockElement, selection, height, width)
     } else {
-      const newBlockElement = CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
+      const newBlockElement = CodeVCNEditorEngine.insertNewTopBlockElementAfterElement(selection, topBlockElement)
       imageSkeleton = this.insertImageSkeleton(newBlockElement, selection, height, width)
     }
     return (imageElement: HTMLImageElement) => {

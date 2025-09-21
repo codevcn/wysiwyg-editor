@@ -1,11 +1,13 @@
 import { html } from "lit-html"
 import { textListingStylish } from "../toolbar/text-listing/text-listing.stylish.js"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine.js"
 import { blockquoteStylish } from "../toolbar/text-blocking/blockquote/blockquote.stylish.js"
 import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { addImageModalManager } from "../toolbar/image-blocking/add-image.manager.js"
 import { textLinkingManager } from "../toolbar/text-linking/text-linking.manager.js"
 import { codeBlockingStylish } from "../toolbar/code-blocking/code-blocking.stylish.js"
+import { TagWrappingPreparationEngine } from "../engine/preparation.engine.js"
+import { tablePlacingManager } from "../toolbar/table-placing/table-placing.manager.js"
 
 class EditorContent {
   private contentElement: HTMLElement
@@ -58,9 +60,13 @@ class EditorContent {
   private bindSelectionChangeEventListener(): void {
     document.addEventListener("selectionchange", (e) => {
       if (this.isEventAllowed(e)) {
-        CodeVCNEditorHelper.saveCurrentCaretPosition()
+        CodeVCNEditorEngine.saveCurrentCaretPosition()
         queueMicrotask(() => {
-          textLinkingManager.showModalOnCaretMoves()
+          const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
+          if (selection) {
+            textLinkingManager.showModalOnCaretMoves(selection)
+            tablePlacingManager.onEditorContentSelectionChange(selection)
+          }
         })
       }
     })
@@ -71,10 +77,16 @@ class EditorContent {
    */
   private bindBeforeInputEventListener(): void {
     this.contentElement.addEventListener("beforeinput", (e) => {
-      if (this.isEventAllowed(e)) {
-        if (e.inputType === "insertParagraph") {
+      const inputType = e.inputType
+      if (inputType === "insertParagraph") {
+        if (this.isEventAllowed(e)) {
           e.preventDefault()
           this.makeNewLine()
+        }
+      }
+      if (inputType === "insertText" || inputType === "insertCompositionText") {
+        if (this.isEventAllowed(e)) {
+          TagWrappingPreparationEngine.completeStylingForWrapping(e)
         }
       }
     })
@@ -106,7 +118,7 @@ class EditorContent {
     const Renderer = () =>
       html`
         <div
-          class="${this.contentElementName} p-4 min-h-[300px] outline-none"
+          class="${this.contentElementName} py-4 px-8 min-h-[300px] outline-none"
           contenteditable="true"
           spellcheck="false"
         ></div>
@@ -115,13 +127,13 @@ class EditorContent {
   }
 
   private makeNewLine(): void {
-    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
     if (!selection) return
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
+    const topBlockElement = CodeVCNEditorEngine.getTopBlockElementFromSelection(selection)
     if (topBlockElement) {
-      CodeVCNEditorHelper.splitElementInHalfAtCaret(topBlockElement, selection)
+      CodeVCNEditorEngine.splitElementInHalfAtCaret(topBlockElement, selection)
     } else {
-      this.contentElement.appendChild(CodeVCNEditorHelper.createNewEmptyTopBlockElement())
+      this.contentElement.appendChild(CodeVCNEditorEngine.createNewEmptyTopBlockElement())
     }
   }
 

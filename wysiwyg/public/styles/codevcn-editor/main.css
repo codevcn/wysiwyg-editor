@@ -3,6 +3,7 @@
   --vcn-border-gray-cl: #d5d5d5;
   --vcn-hover-gray-cl: #4a556520;
   --vcn-text-link-cl: #f63b3b;
+  --vcn-table-border-cl: #bebebe;
 }
 
 .NAME-codevcn-editor {
@@ -101,6 +102,20 @@
   cursor: pointer;
   color: var(--vcn-text-link-cl);
 }
+.NAME-codevcn-editor .NAME-editor-content table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 4px 0;
+  table-layout: fixed; /* Cột chia đều bất kể nội dung */
+}
+.NAME-codevcn-editor .NAME-editor-content table td {
+  border: 1px solid var(--vcn-table-border-cl);
+  padding: 4px 8px;
+}
+.NAME-codevcn-editor .NAME-editor-content table td.STATE-highlight-cell {
+  outline: 2px solid gray;
+  border-radius: 4px;
+}
 
 .NAME-add-image-container .NAME-add-image-type-buttons.STATE-upload .NAME-add-image-btn-upload {
   background-color: #ffffff;
@@ -175,6 +190,46 @@
 }
 .NAME-dropdown-menu.STATE-show {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.NAME-add-table-row-btn-container {
+  display: none;
+  position: fixed;
+  z-index: 90;
+}
+.NAME-add-table-row-btn-container.STATE-show {
+  display: flex;
+}
+
+.NAME-add-table-column-btn-container {
+  display: none;
+  position: fixed;
+  z-index: 90;
+}
+.NAME-add-table-column-btn-container.STATE-show {
+  display: flex;
+}
+
+.NAME-coordinates-row-options {
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 99;
+}
+.NAME-coordinates-row-options.STATE-show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.NAME-coordinates-column-options {
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 99;
+}
+.NAME-coordinates-column-options.STATE-show {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 [hidden] {

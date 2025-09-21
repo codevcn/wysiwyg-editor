@@ -1,5 +1,5 @@
 import { EBlockquoteType, EErrorMessage } from "@/enums/global-enums.js"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine.js"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper.js"
 import { editorContent } from "@/lib/artifact/content/editor.content.js"
 
@@ -23,9 +23,9 @@ class BlockquoteStylish {
   }
 
   private exitBlockquote(selection: Selection): void {
-    const latestTopBlockElement = CodeVCNEditorHelper.findLatestTopBlockElement()
+    const latestTopBlockElement = CodeVCNEditorEngine.findLatestTopBlockElement()
     if (latestTopBlockElement) {
-      CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, latestTopBlockElement)
+      CodeVCNEditorEngine.insertNewTopBlockElementAfterElement(selection, latestTopBlockElement)
     }
     this.currentBlockquoteElement = null
   }
@@ -48,7 +48,7 @@ class BlockquoteStylish {
   }
 
   private unblockquote(selection: Selection): void {
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
+    const topBlockElement = CodeVCNEditorEngine.getTopBlockElementFromSelection(selection)
     if (topBlockElement) {
       const blockquoteElementFirstChild = topBlockElement.querySelector(
         this.blockQuoteTagName.toLowerCase()
@@ -57,7 +57,7 @@ class BlockquoteStylish {
         const childNodes = blockquoteElementFirstChild.childNodes
         const newTopBlocks: HTMLElement[] = []
         for (const childNode of childNodes) {
-          const topBlock = document.createElement(CodeVCNEditorHelper.topBlockElementTagName)
+          const topBlock = document.createElement(CodeVCNEditorEngine.topBlockElementTagName)
           topBlock.appendChild(childNode.cloneNode(true))
           newTopBlocks.push(topBlock)
         }
@@ -68,7 +68,7 @@ class BlockquoteStylish {
   }
 
   private makeBlockquoteOnButtonClick(): void {
-    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
     if (!selection) return
     // bắt buộc phải check bằng selection hiện tại khi tạo blockquote bằng click on button, vì
     // khi tạo blockquote mới thì chưa biết caret có nằm trong blockquote hay không
@@ -76,14 +76,14 @@ class BlockquoteStylish {
       this.unblockquote(selection)
       return
     }
-    const { topBlockElement, isEmpty } = CodeVCNEditorHelper.isEmptyTopBlock(selection)
+    const { topBlockElement, isEmpty } = CodeVCNEditorEngine.isEmptyTopBlock(selection)
     if (topBlockElement) {
       if (isEmpty) {
         // nếu đang ở trong 1 block trống thì tạo blockquote cho block đó
         this.insertNewBlockquoteElement(topBlockElement)
       } else {
         // nếu đang ở trong 1 block KHÔNG trống thì tạo blockquote cho block mới
-        const newBlockElement = CodeVCNEditorHelper.insertNewTopBlockElementAfterElement(selection, topBlockElement)
+        const newBlockElement = CodeVCNEditorEngine.insertNewTopBlockElementAfterElement(selection, topBlockElement)
         this.insertNewBlockquoteElement(newBlockElement)
       }
     }
@@ -123,12 +123,12 @@ class BlockquoteStylish {
     const newLineElement = document.createElement(this.quoteLineTagName)
     newLineElement.innerHTML = "<br>"
     this.currentBlockquoteElement.appendChild(newLineElement)
-    CodeVCNEditorHelper.moveCaretToStartOfElement(newLineElement, selection, selection.getRangeAt(0))
+    CodeVCNEditorEngine.moveCaretToElement(newLineElement, selection, selection.getRangeAt(0))
   }
 
   private makeBlockquoteOnKeyboardEvent(e: KeyboardEvent): void {
     if (e.key === "Enter") {
-      const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+      const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
       if (!selection) return
       const isInBlockquote = this.checkIfIsInBlockquote(selection)
       if (!isInBlockquote) return

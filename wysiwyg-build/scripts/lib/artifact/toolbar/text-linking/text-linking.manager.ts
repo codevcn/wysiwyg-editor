@@ -8,7 +8,6 @@ import { EErrorMessage, EInternalEvents } from "@/enums/global-enums"
 import { copyTextToClipboard, isValidUrl } from "@/helpers/common-helpers"
 import type { TOnSaveLink } from "@/types/api-types"
 import { eventEmitter } from "../../event/event-emitter"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
 
 type TTextLinkFormData = {
   link: string
@@ -23,6 +22,7 @@ class TextLinkingManager {
   private currentLink: string | null = null
   private currentTextOfLink: string | null = null
   private currentTextLinkElement: HTMLAnchorElement | null = null
+  private readonly textLinkPopoverId = "text-link-popover"
 
   constructor() {
     eventEmitter.on(EInternalEvents.BIND_TEXT_LINK_POPOVER_EVENT, (textLinkElement) => {
@@ -185,31 +185,35 @@ class TextLinkingManager {
     const link = this.currentLink
     const textLinkElement = this.currentTextLinkElement
     if (!link || !textLinkElement) return
-    PopoverManager.showPopover(textLinkElement, [
-      {
-        content: html`<div class="flex items-center gap-1 text-gray-800 rounded-md py-1 px-2">
-          <div class="text-gray-600 text-xs truncate max-w-[250px] w-fit">${link}</div>
-          <button
-            class="NAME-copy-box cursor-pointer p-1 hover:bg-gray-200 rounded-md"
-            @click=${(e: MouseEvent) => this.copyTextLinkToClipboard(link, e.currentTarget as HTMLElement)}
-          >
-            <i class="bi bi-copy text-base NAME-copy-copy"></i>
-            <i class="bi bi-check-all text-base NAME-copy-copied"></i>
-          </button>
-          <button
-            class="cursor-pointer p-1 hover:bg-gray-200 rounded-md"
-            @click=${() => this.showModalOnPopover(link, textLinkElement)}
-          >
-            <i class="bi bi-pencil text-base"></i>
-          </button>
-          <button class="cursor-pointer p-1 hover:bg-gray-200 rounded-md" @click=${() => this.unlinkFromText()}>
-            <i class="bi bi-trash text-base"></i>
-          </button>
-        </div>`,
-      },
-    ])
-    PopoverManager.bindHideEventToTrigger(textLinkElement, 300)
-    PopoverManager.bindHideEventToPopover(textLinkElement, 300)
+    PopoverManager.showPopover(
+      textLinkElement,
+      [
+        {
+          content: html`<div class="flex items-center gap-1 text-gray-800 rounded-md py-1 px-2">
+            <div class="text-gray-600 text-xs truncate max-w-[250px] w-fit">${link}</div>
+            <button
+              class="NAME-copy-box cursor-pointer p-1 hover:bg-gray-200 rounded-md"
+              @click=${(e: MouseEvent) => this.copyTextLinkToClipboard(link, e.currentTarget as HTMLElement)}
+            >
+              <i class="bi bi-copy text-base NAME-copy-copy"></i>
+              <i class="bi bi-check-all text-base NAME-copy-copied"></i>
+            </button>
+            <button
+              class="cursor-pointer p-1 hover:bg-gray-200 rounded-md"
+              @click=${() => this.showModalOnPopover(link, textLinkElement)}
+            >
+              <i class="bi bi-pencil text-base"></i>
+            </button>
+            <button class="cursor-pointer p-1 hover:bg-gray-200 rounded-md" @click=${() => this.unlinkFromText()}>
+              <i class="bi bi-trash text-base"></i>
+            </button>
+          </div>`,
+        },
+      ],
+      this.textLinkPopoverId
+    )
+    PopoverManager.bindHideEventToTrigger(textLinkElement, 300, this.textLinkPopoverId)
+    PopoverManager.bindHideEventToPopover(textLinkElement, 300, this.textLinkPopoverId)
   }
 
   setupTextLinkElementToShowPopover(textLinkElement: HTMLAnchorElement): void {
@@ -235,20 +239,17 @@ class TextLinkingManager {
     }
   }
 
-  showModalOnCaretMoves(): void {
-    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
-    if (selection) {
-      const node = selection.anchorNode
-      const element = node?.nodeType === Node.TEXT_NODE ? node.parentElement : (node as HTMLElement)
-      if (element?.tagName === textLinkingStylish.getTextLinkTagName()) {
-        this.showModalAtTextLinkElement(element as HTMLAnchorElement)
+  showModalOnCaretMoves(selection: Selection): void {
+    const node = selection.anchorNode
+    const element = node instanceof HTMLElement ? node : node?.parentElement
+    if (element && element.tagName === textLinkingStylish.getTextLinkTagName()) {
+      this.showModalAtTextLinkElement(element as HTMLAnchorElement)
+    } else {
+      const linkElement = element?.closest<HTMLAnchorElement>(textLinkingStylish.getTextLinkTagName())
+      if (linkElement && editorContent.getContentElement().contains(linkElement)) {
+        this.showModalAtTextLinkElement(linkElement)
       } else {
-        const linkElement = element?.closest<HTMLAnchorElement>(textLinkingStylish.getTextLinkTagName())
-        if (linkElement && editorContent.getContentElement().contains(linkElement)) {
-          this.showModalAtTextLinkElement(linkElement)
-        } else {
-          PopoverManager.forceHidePopover()
-        }
+        PopoverManager.forceHidePopover(this.textLinkPopoverId)
       }
     }
   }

@@ -9,7 +9,7 @@ type ModalProps = {
 
 export const Modal = ({ body, title, footer }: ModalProps): TemplateResult<1> => {
   return html`
-    <div class="NAME-modal fixed inset-0 flex items-center justify-center p-4 z-[99] text-base">
+    <div class="NAME-modal fixed inset-0 flex items-center justify-center p-4 z-[100] text-base">
       <div class="NAME-modal-overlay bg-black/50 absolute inset-0 z-10"></div>
       <div
         class="NAME-modal-content flex flex-col bg-white rounded-2xl shadow-2xl w-full h-fit max-h-full max-w-[70vw] overflow-hidden relative z-11"

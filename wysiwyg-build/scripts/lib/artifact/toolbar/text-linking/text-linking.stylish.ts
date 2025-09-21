@@ -1,6 +1,6 @@
 import { EditorInternalErrorHelper } from "@/helpers/error-helper"
 import { editorContent } from "../../content/editor.content"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine"
 import { EErrorMessage, EInternalEvents } from "@/enums/global-enums"
 import type { TOnSaveLink } from "@/types/api-types"
 import { eventEmitter } from "../../event/event-emitter"
@@ -54,7 +54,7 @@ class TextLinkingStylish {
     if (anchorNode.tagName === this.linkTagName) {
       return anchorNode as HTMLAnchorElement
     }
-    return CodeVCNEditorHelper.getClosestParentOfElement<HTMLAnchorElement>(
+    return CodeVCNEditorEngine.getClosestParentOfElement<HTMLAnchorElement>(
       anchorNode,
       (element) => element.tagName === this.linkTagName
     )
@@ -99,7 +99,7 @@ class TextLinkingStylish {
         if (link) {
           const trimmedLink = link.trim()
           if (trimmedLink.length > 0) {
-            const selection = CodeVCNEditorHelper.restoreCaretPosition()
+            const selection = CodeVCNEditorEngine.restoreCaretPosition()
             if (selection) {
               this.insertNewLinkToCurrentCaret(trimmedLink, textOfLink || trimmedLink, selection, type)
             }
@@ -110,10 +110,10 @@ class TextLinkingStylish {
   }
 
   private makeLinking(showLinkModalHandler: TShowLinkModalHandler): void {
-    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
     if (!selection) return
-    CodeVCNEditorHelper.saveCurrentCaretPosition(selection)
-    if (CodeVCNEditorHelper.isSelectingContent()) {
+    CodeVCNEditorEngine.saveCurrentCaretPosition(selection)
+    if (CodeVCNEditorEngine.isSelectingContent()) {
       const textLinkElement = this.checkIfIsOnTextLink(selection)
       if (textLinkElement) {
         this.showModalToUpdateLink(textLinkElement, showLinkModalHandler)

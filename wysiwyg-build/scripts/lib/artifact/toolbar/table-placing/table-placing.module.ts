@@ -1,0 +1,70 @@
+import type { TToolbarAction } from "@/types/global-types.js"
+import { ETablePlacingType, EToolbarAction } from "@/enums/global-enums.js"
+import { repeat } from "lit-html/directives/repeat.js"
+import { html } from "lit-html"
+import { unsafeHTML } from "lit-html/directives/unsafe-html.js"
+import { LitHTMLHelper } from "@/helpers/common-helpers.js"
+import { ToolbarButton } from "../toolbar-button.js"
+import { tablePlacingManager } from "./table-placing.manager.js"
+
+class TablePlacingModule {
+  private sectionElement: HTMLElement
+  private actions: TToolbarAction[] = [
+    {
+      action: EToolbarAction.TABLE_PLACING,
+      label: `<i class="bi bi-table"></i>`,
+    },
+  ]
+
+  constructor() {
+    this.sectionElement = this.createSectionElement()
+    this.bindEvents()
+  }
+
+  getSectionElement(): HTMLElement {
+    return this.sectionElement
+  }
+
+  private createSectionElement(): HTMLElement {
+    const Renderer = () => html`<div class="NAME-table-placing-section flex gap-2">
+      ${repeat(
+        this.actions,
+        (action) => action.action,
+        (action) =>
+          html`<button
+            class="NAME-toolbar-btn flex items-center px-2 py-1 leading-none rounded hover:bg-gray-200 cursor-pointer ${action.className}"
+            data-action="${action.action}"
+          >
+            ${unsafeHTML(action.label)}
+          </button>`
+      )}
+    </div>`
+    return LitHTMLHelper.createElementFromRenderer(Renderer, [])
+  }
+
+  private bindEvents(): void {
+    this.bindButtonEvents()
+  }
+
+  private bindButtonEvents(): void {
+    const buttons = this.sectionElement.querySelectorAll<HTMLElement>(".NAME-toolbar-btn")
+    buttons.forEach((btn) => {
+      const tb = new ToolbarButton<ETablePlacingType>(btn)
+      tb.onClick((action) => {
+        this.onAction(action)
+      })
+    })
+  }
+
+  private onAction(action: ETablePlacingType): void {
+    queueMicrotask(() => {
+      switch (action) {
+        case ETablePlacingType.TABLE_PLACING:
+          tablePlacingManager.showTablePlacingModal()
+          break
+      }
+    })
+  }
+}
+
+export const tablePlacingModule = new TablePlacingModule()

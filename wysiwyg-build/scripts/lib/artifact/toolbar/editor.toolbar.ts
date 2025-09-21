@@ -7,6 +7,7 @@ import { LitHTMLHelper } from "@/helpers/common-helpers.js"
 import { textLinkingModule } from "./text-linking/text-linking.module.js"
 import { codeBlockingModule } from "./code-blocking/code-blocking.module.js"
 import { textHeadingModule } from "./text-heading/text-heading.module.js"
+import { tablePlacingModule } from "./table-placing/table-placing.module.js"
 
 class EditorToolbar {
   private toolbarElement: HTMLElement
@@ -25,6 +26,7 @@ class EditorToolbar {
     this.toolbarElement.appendChild(imageBlockingModule.getSectionElement())
     this.toolbarElement.appendChild(textLinkingModule.getSectionElement())
     this.toolbarElement.appendChild(codeBlockingModule.getSectionElement())
+    this.toolbarElement.appendChild(tablePlacingModule.getSectionElement())
   }
 
   private createToolbarElement(): HTMLElement {

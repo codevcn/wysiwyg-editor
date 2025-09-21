@@ -1,6 +1,8 @@
 import { ETextStylingType } from "@/enums/global-enums.js"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
-import type { TWrappingType } from "@/types/global-types"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine.js"
+import type { TWrappingType } from "@/types/global-types.js"
+import { TagWrappingEngine } from "../../engine/wrapping.engine.js"
+import { TagWrappingPreparationEngine } from "../../engine/preparation.engine.js"
 
 class TextStylingStylish {
   private currentStylingType: ETextStylingType | null = null
@@ -43,46 +45,56 @@ class TextStylingStylish {
   private cleanUpElements(container: HTMLElement, wrappingType: TWrappingType, isForceToUnwrap?: boolean): void {
     if (wrappingType === "unwrap") {
       if (isForceToUnwrap) {
-        CodeVCNEditorHelper.removeOverlapChildTags(container, this.getCurrentStylingSimilarTagNames(), true)
+        CodeVCNEditorEngine.removeOverlapChildTags(container, this.getCurrentStylingSimilarTagNames(), true)
       }
-      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container)
-      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+      CodeVCNEditorEngine.removeEmptyChildrenRecursively(container)
+      CodeVCNEditorEngine.mergeAdjacentStyling(container)
     } else {
-      CodeVCNEditorHelper.removeOverlapChildTags(container, this.getCurrentStylingSimilarTagNames())
-      CodeVCNEditorHelper.removeEmptyChildrenRecursively(container.parentElement || container)
-      CodeVCNEditorHelper.mergeAdjacentStyling(container)
+      CodeVCNEditorEngine.removeOverlapChildTags(container, this.getCurrentStylingSimilarTagNames())
+      CodeVCNEditorEngine.removeEmptyChildrenRecursively(container.parentElement || container)
+      CodeVCNEditorEngine.mergeAdjacentStyling(container)
     }
+  }
+
+  private insertStylingAtCaret(): void {
+    CodeVCNEditorEngine.saveCurrentCaretPosition()
+    TagWrappingPreparationEngine.prepareStylingForWrapping(this.createNewStylingTagElement())
+    CodeVCNEditorEngine.restoreCaretPosition()
   }
 
   private makeStyling(selection: Selection, stylingType: ETextStylingType): void {
     this.setCurrentStylingType(stylingType)
 
-    CodeVCNEditorHelper.handleWrappingSelectionInMultipleLines(
-      selection,
-      this.getCurrentStylingSimilarTagNames(),
-      (range, wrappingType) => {
-        CodeVCNEditorHelper.wrapUnwrapRangeByWrapper(
-          range,
-          this.createNewStylingTagElement(),
-          wrappingType,
-          (range) =>
-            CodeVCNEditorHelper.checkIfRangeIsInsideWrapper(
-              range,
-              (element) =>
-                this.ifTagNameIsCurrentStyling(element.tagName) &&
-                element.contains(range.startContainer) &&
-                element.contains(range.endContainer)
-            ),
-          (container, type, isForceToUnwrap) => {
-            this.cleanUpElements(container, type, isForceToUnwrap)
-          }
-        )
-      }
-    )
+    if (CodeVCNEditorEngine.isSelectingContent()) {
+      TagWrappingEngine.wrapSelectionInMultipleLines(
+        selection,
+        this.getCurrentStylingSimilarTagNames(),
+        (range, wrappingType) => {
+          TagWrappingEngine.wrapUnwrapRangeByWrapper(
+            range,
+            this.createNewStylingTagElement(),
+            wrappingType,
+            (range) =>
+              TagWrappingEngine.checkIfRangeIsInsideWrapper(
+                range,
+                (element) =>
+                  this.ifTagNameIsCurrentStyling(element.tagName) &&
+                  element.contains(range.startContainer) &&
+                  element.contains(range.endContainer)
+              ),
+            (container, type, isForceToUnwrap) => {
+              this.cleanUpElements(container, type, isForceToUnwrap)
+            }
+          )
+        }
+      )
+    } else {
+      this.insertStylingAtCaret()
+    }
   }
 
   onAction(stylingType: ETextStylingType): void {
-    const selection = CodeVCNEditorHelper.checkIsFocusingInEditorContent()
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
     if (!selection) return
     this.makeStyling(selection, stylingType)
   }

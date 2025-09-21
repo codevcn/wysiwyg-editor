@@ -25,7 +25,7 @@ import { vscodeDark, vscodeLight } from "@uiw/codemirror-theme-vscode"
 import { javascript } from "@codemirror/lang-javascript"
 import { python } from "@codemirror/lang-python"
 import { cpp } from "@codemirror/lang-cpp"
-import { CodeVCNEditorHelper } from "@/helpers/codevcn-editor-helper.js"
+import { CodeVCNEditorEngine } from "@/lib/artifact/engine/codevcn-editor.engine.js"
 import { EditorInternalErrorHelper } from "@/helpers/error-helper.js"
 import { ECodeBlockingLanguage, EErrorMessage } from "@/enums/global-enums.js"
 import { html } from "lit-html"
@@ -296,7 +296,7 @@ export class CodeBlockViewManager {
 
   private insertCodeBlockSkeleton(selection: Selection): TSkeletonReplacer {
     const skeleton = this.createCodeBlockSkeleton()
-    const topBlockElement = CodeVCNEditorHelper.getTopBlockElementFromSelection(selection)
+    const topBlockElement = CodeVCNEditorEngine.getTopBlockElementFromSelection(selection)
     if (!topBlockElement) {
       throw EditorInternalErrorHelper.createError(EErrorMessage.TOP_BLOCK_NOT_FOUND)
     }
