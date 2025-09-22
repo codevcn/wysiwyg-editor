@@ -44,6 +44,7 @@ class EditorContent {
         queueMicrotask(() => {
           textListingStylish.onAction(undefined, e)
           blockquoteStylish.onAction(undefined, e)
+          tablePlacingManager.onEditorContentKeydown(e)
         })
       }
     })

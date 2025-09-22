@@ -12,6 +12,7 @@
 .NAME-popover {
   clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
   transition: clip-path 0.2s ease-in-out;
+  width: max-content;
 
   &.STATE-show {
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
@@ -38,8 +39,12 @@
 
 .NAME-add-table-row-btn-container {
   display: none;
-  position: fixed;
+  position: absolute;
+  top: 100%;
+  left: 0;
   z-index: 90;
+  width: 100%;
+  padding-top: 6px;
 
   &.STATE-show {
     display: flex;
@@ -48,8 +53,12 @@
 
 .NAME-add-table-column-btn-container {
   display: none;
-  position: fixed;
+  position: absolute;
+  top: 0;
+  left: 100%;
   z-index: 90;
+  height: 100%;
+  padding-left: 6px;
 
   &.STATE-show {
     display: flex;
@@ -57,25 +66,27 @@
 }
 
 .NAME-coordinates-row-options {
-  opacity: 0;
-  pointer-events: none;
-  position: fixed;
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
   z-index: 99;
 
   &.STATE-show {
-    opacity: 1;
-    pointer-events: auto;
+    display: block;
   }
 }
 
 .NAME-coordinates-column-options {
-  opacity: 0;
-  pointer-events: none;
-  position: fixed;
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 99;
 
   &.STATE-show {
-    opacity: 1;
-    pointer-events: auto;
+    display: block;
   }
 }

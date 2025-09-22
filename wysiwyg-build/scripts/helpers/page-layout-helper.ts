@@ -1,19 +1,34 @@
+type TDetectCollisionWithViewportEdgesResult = {
+  edge: "left" | "right" | "top" | "bottom" | null
+}
+
 export class PageLayoutHelper {
-  static detectCollisionWithViewportEdges(target: HTMLElement, margin: number = 10): void {
-    const popoverRect = target.getBoundingClientRect()
+  static detectCollisionWithViewportEdges(
+    target: HTMLElement,
+    margin: number
+  ): TDetectCollisionWithViewportEdgesResult {
+    const targetRect = target.getBoundingClientRect()
     const viewportWidth = window.innerWidth
     const viewportHeight = window.innerHeight
-    if (popoverRect.left < 0) {
+    const result: TDetectCollisionWithViewportEdgesResult = {
+      edge: null,
+    }
+    if (targetRect.left < 0) {
       target.style.left = `${margin}px`
+      result.edge = "left"
     }
-    if (popoverRect.right > viewportWidth) {
-      target.style.left = `${viewportWidth - target.offsetWidth - margin}px`
+    if (targetRect.right > viewportWidth) {
+      target.style.left = `${viewportWidth - targetRect.width - margin}px`
+      result.edge = "right"
     }
-    if (popoverRect.top < 0) {
+    if (targetRect.top < 0) {
       target.style.top = `${margin}px`
+      result.edge = "top"
     }
-    if (popoverRect.bottom > viewportHeight) {
-      target.style.top = `${viewportHeight - target.offsetHeight - margin}px`
+    if (targetRect.bottom > viewportHeight) {
+      target.style.top = `${viewportHeight - targetRect.height - margin}px`
+      result.edge = "bottom"
     }
+    return result
   }
 }

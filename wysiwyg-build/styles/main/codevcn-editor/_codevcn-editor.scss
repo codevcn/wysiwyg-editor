@@ -7,14 +7,21 @@
   width: 100%;
   margin: 4px 0;
   table-layout: fixed; /* Cột chia đều bất kể nội dung */
+  position: relative;
 
-  td {
-    border: 1px solid $cell-border-color;
-    padding: $cell-padding;
+  tr {
+    &.STATE-dragging {
+      opacity: 0.5;
+    }
 
-    &.STATE-highlight-cell {
-      outline: 2px solid $cell-highlight-color;
-      border-radius: 4px;
+    td {
+      border: 1px solid $cell-border-color;
+      padding: $cell-padding;
+      position: relative;
+
+      &.STATE-highlight-cell {
+        outline: 2px solid $cell-highlight-color;
+      }
     }
   }
 }

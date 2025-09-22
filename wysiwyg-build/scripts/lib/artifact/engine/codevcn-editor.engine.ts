@@ -125,7 +125,7 @@ export class CodeVCNEditorEngine {
     element: HTMLElement,
     selection: Selection,
     selectionRange: Range,
-    position: "start" | "end" = "start"
+    caretPosition: "start" | "end" = "start"
   ): void {
     let firstTextNode = element.firstChild
     if (firstTextNode) {
@@ -138,7 +138,7 @@ export class CodeVCNEditorEngine {
       element.prepend(firstTextNode)
     }
     selectionRange.selectNodeContents(element)
-    selectionRange.collapse(position === "start")
+    selectionRange.collapse(caretPosition === "start")
     selection.removeAllRanges()
     selection.addRange(selectionRange)
   }

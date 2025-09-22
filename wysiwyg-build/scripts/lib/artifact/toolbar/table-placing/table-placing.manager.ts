@@ -1,11 +1,11 @@
-import { getElementIndexInParent, LitHTMLHelper, setupKeyIndexForObjectArray } from "@/helpers/common-helpers"
+import { getElementIndexInParent, LitHTMLHelper } from "@/helpers/common-helpers"
 import { Table } from "@/lib/components/table"
 import { html } from "lit-html"
 import { ModalManager } from "@/lib/components/managers/modal.manager"
 import { tablePlacingStylish } from "./table-placing.stylish"
 import { CodeVCNEditorEngine } from "../../engine/codevcn-editor.engine"
-import { repeat } from "lit-html/directives/repeat.js"
 import { PopoverManager } from "@/lib/components/managers/popover.manager"
+import { TableColumnsRowsManager } from "./table-columns-rows.manager"
 
 type TTablePlacingModalFormData = {
   columns: number
@@ -14,22 +14,15 @@ type TTablePlacingModalFormData = {
 
 class TablePlacingManager {
   private preHighlightedCellElement: HTMLElement | null = null
-  private addColumnBtnElement: HTMLElement
-  private addRowBtnElement: HTMLElement
   private coordinatesRowOptionsBtn: HTMLElement
   private coordinatesColumnOptionsBtn: HTMLElement
+  private tableColumnsRowsManager: TableColumnsRowsManager
 
   constructor() {
-    this.addColumnBtnElement = this.createAddColumnBtnElement()
-    this.addRowBtnElement = this.createAddRowBtnElement()
     this.coordinatesRowOptionsBtn = this.createCoordinatesRowOptionsBtn()
     this.coordinatesColumnOptionsBtn = this.createCoordinatesColumnOptionsBtn()
-    document.body.append(
-      this.addColumnBtnElement,
-      this.addRowBtnElement,
-      this.coordinatesRowOptionsBtn,
-      this.coordinatesColumnOptionsBtn
-    )
+    document.body.append(this.coordinatesRowOptionsBtn, this.coordinatesColumnOptionsBtn)
+    this.tableColumnsRowsManager = new TableColumnsRowsManager()
   }
 
   private showCoordinatesOptionsPopover(coordinatesOptionsBtn: HTMLElement, type: "row" | "column"): void {
@@ -40,24 +33,53 @@ class TablePlacingManager {
         {
           content: html`
             <div class="flex flex-col gap-1 text-sm text-gray-800 bg-white py-1 rounded-md">
-              <button
-                class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-red-100 hover:text-red-600"
-              >
-                <i class="bi bi-trash text-sm"></i>
-                <span>Delete ${isRow ? "Row" : "Column"}</span>
-              </button>
-              <button class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-gray-100">
-                ${isRow
-                  ? html`<i class="bi bi-arrow-90deg-up text-sm"></i>`
-                  : html`<i class="bi bi-arrow-90deg-left text-sm"></i>`}
-                <span>Insert ${isRow ? "Row" : "Column"} ${isRow ? "Above" : "Left"}</span>
-              </button>
-              <button class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-gray-100">
-                ${isRow
-                  ? html`<i class="bi bi-arrow-90deg-down text-sm"></i>`
-                  : html`<i class="bi bi-arrow-90deg-right text-sm"></i>`}
-                <span>Insert ${isRow ? "Row" : "Column"} ${isRow ? "Below" : "Right"}</span>
-              </button>
+              ${isRow
+                ? html`<button
+                    class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-red-100 hover:text-red-600"
+                    @click=${() => this.tableColumnsRowsManager.deleteRowByCoordinatesOptions()}
+                  >
+                    <i class="bi bi-trash text-sm"></i>
+                    <span>Delete Row</span>
+                  </button>`
+                : html`<button
+                    class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-red-100 hover:text-red-600"
+                    @click=${() => this.tableColumnsRowsManager.deleteColumnByCoordinatesOptions()}
+                  >
+                    <i class="bi bi-trash text-sm"></i>
+                    <span>Delete Column</span>
+                  </button>`}
+              ${isRow
+                ? html`<button
+                    class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-gray-100"
+                    @click=${() => this.tableColumnsRowsManager.insertNewEmptyRowElementByCoordinatesOptions("above")}
+                  >
+                    <i class="bi bi-arrow-90deg-up text-sm"></i>
+                    <span>Insert Row Above</span>
+                  </button>`
+                : html`<button
+                    class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-gray-100"
+                    @click=${() =>
+                      this.tableColumnsRowsManager.insertNewEmptyColumnsElementByCoordinatesOptions("left")}
+                  >
+                    <i class="bi bi-arrow-90deg-left text-sm"></i>
+                    <span>Insert Column Left</span>
+                  </button>`}
+              ${isRow
+                ? html`<button
+                    class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-gray-100"
+                    @click=${() => this.tableColumnsRowsManager.insertNewEmptyRowElementByCoordinatesOptions("below")}
+                  >
+                    <i class="bi bi-arrow-90deg-down text-sm"></i>
+                    <span>Insert Row Below</span>
+                  </button>`
+                : html`<button
+                    class="flex items-center cursor-pointer gap-1 rounded w-full py-0.5 px-2 hover:bg-gray-100"
+                    @click=${() =>
+                      this.tableColumnsRowsManager.insertNewEmptyColumnsElementByCoordinatesOptions("right")}
+                  >
+                    <i class="bi bi-arrow-90deg-right text-sm"></i>
+                    <span>Insert Column Right</span>
+                  </button>`}
             </div>
           `,
         },
@@ -71,6 +93,7 @@ class TablePlacingManager {
       () =>
         html`<button
           class="NAME-coordinates-row-options cursor-pointer px-0.5 py-0.5 border border-regular-table-border-cl bg-white hover:bg-gray-100 rounded"
+          contenteditable="false"
           @click=${() => this.showCoordinatesOptionsPopover(this.coordinatesRowOptionsBtn, "row")}
         >
           <i class="bi bi-three-dots-vertical text-sm"></i>
@@ -84,148 +107,13 @@ class TablePlacingManager {
       () =>
         html`<button
           class="NAME-coordinates-column-options cursor-pointer px-0.5 py-0.5 border border-regular-table-border-cl bg-white hover:bg-gray-100 rounded"
+          contenteditable="false"
           @click=${() => this.showCoordinatesOptionsPopover(this.coordinatesColumnOptionsBtn, "column")}
         >
           <i class="bi bi-three-dots text-sm"></i>
         </button>`,
       []
     )
-  }
-
-  private createAddColumnBtnElement(): HTMLElement {
-    return LitHTMLHelper.createElementFromRenderer(
-      () => html`<div class="NAME-add-table-column-btn-container">
-        <button
-          class="flex items-center justify-center cursor-pointer bg-white gap-1 p-0.5 rounded w-full border border-regular-table-border-cl hover:bg-gray-100"
-        >
-          <i class="bi bi-plus-lg text-sm"></i>
-        </button>
-      </div>`,
-      []
-    )
-  }
-
-  private hideShowAddColumnBtnElement(show: boolean, tableElement: HTMLElement): void {
-    this.addColumnBtnElement.classList.toggle("STATE-show", show)
-    if (show) {
-      const tableElementRect = tableElement.getBoundingClientRect()
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-      this.addColumnBtnElement.style.cssText = `
-        left: ${tableElementRect.right + scrollLeft - 2}px;
-        top: ${tableElementRect.top + scrollTop}px;
-        height: ${tableElementRect.height}px;
-        padding-left: 8px;
-      `
-    }
-  }
-
-  private createNewEmptyColumnElement(rowsCount: number): HTMLElement {
-    const cells: Parameters<typeof Table>[0]["rows"][0]["cells"] = []
-    for (let i = 0; i < rowsCount; i++) {
-      cells.push({
-        key: `cell-${i}`,
-        content: html`<td>
-          <div><br /></div>
-        </td>`,
-      })
-    }
-    return LitHTMLHelper.createElementFromRenderer(
-      () => html`<tr>
-        ${repeat(
-          cells,
-          ({ key }) => key,
-          ({ content }) => content
-        )}
-      </tr>`,
-      []
-    )
-  }
-
-  private createNewEmptyColumnsElement(columnsCount: number, rowsCount: number): HTMLElement[] {
-    const columns: HTMLElement[] = []
-    for (let i = 0; i < columnsCount; i++) {
-      columns.push(this.createNewEmptyColumnElement(rowsCount))
-    }
-    return columns
-  }
-
-  private insertNewEmptyColumnsElement(columnsCount: number, rowsCount: number, tableElement: HTMLElement): void {
-    const columns = this.createNewEmptyColumnsElement(columnsCount, rowsCount)
-    tableElement.append(...columns)
-    this.hideShowAddColumnBtnElement(true, tableElement)
-  }
-
-  private onClickOnAddColumnBtn(tableElement: HTMLElement): void {
-    const rowsCount =
-      tableElement.querySelectorAll<HTMLElement>(
-        `${tablePlacingStylish.getTableBodyTagName()} ${tablePlacingStylish.getTableRowTagName()}`
-      ).length || 0
-    this.insertNewEmptyColumnsElement(1, rowsCount, tableElement)
-  }
-
-  private createAddRowBtnElement(): HTMLElement {
-    return LitHTMLHelper.createElementFromRenderer(
-      () => html`<div class="NAME-add-table-row-btn-container">
-        <button
-          class="flex items-center justify-center cursor-pointer bg-white gap-1 p-0.5 rounded w-full border border-regular-table-border-cl hover:bg-gray-100"
-        >
-          <i class="bi bi-plus-lg text-sm"></i>
-        </button>
-      </div>`,
-      []
-    )
-  }
-
-  private hideShowAddRowBtnElement(show: boolean, tableElement: HTMLElement): void {
-    this.addRowBtnElement.classList.toggle("STATE-show", show)
-    if (show) {
-      const tableElementRect = tableElement.getBoundingClientRect()
-      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
-      const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft
-      this.addRowBtnElement.style.cssText = `
-        left: ${tableElementRect.left + scrollLeft}px;
-        top: ${tableElementRect.bottom + scrollTop - 2}px;
-        width: ${tableElementRect.width}px;
-        padding-top: 8px;
-      `
-    }
-  }
-
-  private createNewEmptyRowElement(columnsCount: number): HTMLElement {
-    const cells: Parameters<typeof Table>[0]["rows"][0]["cells"] = []
-    for (let j = 0; j < columnsCount; j++) {
-      cells.push({
-        key: `cell-${j}`,
-        content: html`<td>
-          <div><br /></div>
-        </td>`,
-      })
-    }
-    return LitHTMLHelper.createElementFromRenderer(
-      () => html`<tr>
-        ${repeat(
-          cells,
-          ({ key }) => key,
-          ({ content }) => content
-        )}
-      </tr>`,
-      []
-    )
-  }
-
-  private createNewEmptyRowsElement(rowsCount: number, columnsCountPerRow: number): HTMLElement[] {
-    const rows: HTMLElement[] = []
-    for (let i = 0; i < rowsCount; i++) {
-      rows.push(this.createNewEmptyRowElement(columnsCountPerRow))
-    }
-    return rows
-  }
-
-  private insertNewEmptyRowsElement(rowsCount: number, columnsCountPerRow: number, tableElement: HTMLElement): void {
-    const rows = this.createNewEmptyRowsElement(rowsCount, columnsCountPerRow)
-    tableElement.append(...rows)
-    this.hideShowAddRowBtnElement(true, tableElement)
   }
 
   private createNewTableElement(rowsCount: number, columnsCount: number): HTMLElement {
@@ -253,50 +141,10 @@ class TablePlacingManager {
     ])
   }
 
-  private onClickOnAddRowBtn(tableElement: HTMLElement): void {
-    const lastRow = tableElement.querySelector(tablePlacingStylish.getTableBodyTagName())?.lastElementChild
-    const columnsCount = lastRow
-      ? lastRow.querySelectorAll<HTMLTableCellElement>(tablePlacingStylish.getTableCellTagName()).length
-      : 0
-    this.insertNewEmptyRowsElement(1, columnsCount, tableElement)
-  }
-
-  private bindHideShowAddRowBtnElement(tableElement: HTMLElement): void {
-    tableElement.addEventListener("mouseenter", () => {
-      this.hideShowAddRowBtnElement(true, tableElement)
-      this.addRowBtnElement.onclick = () => {
-        this.onClickOnAddRowBtn(tableElement)
-      }
-      this.hideShowAddColumnBtnElement(true, tableElement)
-      this.addColumnBtnElement.onclick = () => {
-        this.onClickOnAddColumnBtn(tableElement)
-      }
-    })
-    tableElement.addEventListener("mouseleave", (e) => {
-      const relatedTarget = e.relatedTarget as Node
-      if (!(tableElement.contains(relatedTarget) || this.addRowBtnElement.contains(relatedTarget))) {
-        this.hideShowAddRowBtnElement(false, tableElement)
-      }
-      if (!(tableElement.contains(relatedTarget) || this.addColumnBtnElement.contains(relatedTarget))) {
-        this.hideShowAddColumnBtnElement(false, tableElement)
-      }
-    })
-    this.addRowBtnElement.addEventListener("mouseleave", (e) => {
-      const relatedTarget = e.relatedTarget as Node
-      if (tableElement.contains(relatedTarget) || this.addRowBtnElement.contains(relatedTarget)) return
-      this.hideShowAddRowBtnElement(false, tableElement)
-    })
-    this.addColumnBtnElement.addEventListener("mouseleave", (e) => {
-      const relatedTarget = e.relatedTarget as Node
-      if (tableElement.contains(relatedTarget) || this.addColumnBtnElement.contains(relatedTarget)) return
-      this.hideShowAddColumnBtnElement(false, tableElement)
-    })
-  }
-
   private insertNewTableIntoCurrentCaret(rowsCount: number, columnsCount: number): void {
     const tableElement = this.createNewTableElement(rowsCount, columnsCount)
     tablePlacingStylish.insertNewTableIntoCurrentCaret(tableElement)
-    this.bindHideShowAddRowBtnElement(tableElement)
+    this.tableColumnsRowsManager.bindHideShowAddRowBtnElement(tableElement)
   }
 
   private notify(message: string): void {
@@ -381,39 +229,37 @@ class TablePlacingManager {
     }
   }
 
+  private getRowFromCellElement(cellElement: HTMLElement): HTMLElement | null {
+    return cellElement.closest<HTMLElement>(tablePlacingStylish.getTableRowTagName())
+  }
+
   private showTableCoordinatesOptionsOnSelectionChange(cellElement: HTMLElement | null): void {
+    this.tableColumnsRowsManager.setFocusedCellElement(cellElement)
     if (cellElement) {
       const tableElement = cellElement.closest<HTMLElement>(tablePlacingStylish.getTableTagName())
       if (!tableElement) return
       const firstRow = tableElement.querySelector(tablePlacingStylish.getTableBodyTagName())?.firstElementChild
       if (!firstRow) return
-      const cellsInFirstRow = firstRow.querySelectorAll<HTMLTableCellElement>(tablePlacingStylish.getTableCellTagName())
-      const cellIndexInFirstRow = getElementIndexInParent(cellElement)
-      const respectiveCellInFirstRow = cellsInFirstRow[cellIndexInFirstRow]
-      const currentRow = cellElement.parentElement
+      const cellIndexInFirstRow = this.tableColumnsRowsManager.getColumnIndexByCellElement(cellElement)
+      const respectiveCellInFirstRow = firstRow.querySelectorAll<HTMLTableCellElement>(
+        tablePlacingStylish.getTableCellTagName()
+      )[cellIndexInFirstRow]
+      const currentRow = this.getRowFromCellElement(cellElement)
       const firstCellInRow = currentRow?.firstElementChild
       if (!firstCellInRow || !respectiveCellInFirstRow) return
-      const respectiveCellInFirstRowRect = respectiveCellInFirstRow.getBoundingClientRect()
-      const firstCellInRowRect = firstCellInRow.getBoundingClientRect()
-      const coordinatesRowOptionsRect = this.coordinatesRowOptionsBtn.getBoundingClientRect()
-      const coordinatesColumnOptionsRect = this.coordinatesColumnOptionsBtn.getBoundingClientRect()
+      firstCellInRow.appendChild(this.coordinatesRowOptionsBtn)
+      respectiveCellInFirstRow.appendChild(this.coordinatesColumnOptionsBtn)
       this.coordinatesRowOptionsBtn.classList.add("STATE-show")
-      this.coordinatesRowOptionsBtn.style.cssText = `
-        left: ${firstCellInRowRect.left - coordinatesRowOptionsRect.width / 2}px;
-        top: ${firstCellInRowRect.top + firstCellInRowRect.height / 2 - coordinatesRowOptionsRect.height / 2}px;
-      `
       this.coordinatesColumnOptionsBtn.classList.add("STATE-show")
-      this.coordinatesColumnOptionsBtn.style.cssText = `
-        left: ${
-          respectiveCellInFirstRowRect.left +
-          respectiveCellInFirstRowRect.width / 2 -
-          coordinatesColumnOptionsRect.width / 2
-        }px;
-        top: ${respectiveCellInFirstRowRect.top - coordinatesColumnOptionsRect.height / 2}px;
-      `
+      this.tableColumnsRowsManager.bindDropAndDragEventsToCoordinatesOptions(
+        this.coordinatesRowOptionsBtn,
+        this.coordinatesColumnOptionsBtn
+      )
     } else {
       this.coordinatesRowOptionsBtn.classList.remove("STATE-show")
       this.coordinatesColumnOptionsBtn.classList.remove("STATE-show")
+      document.body.appendChild(this.coordinatesRowOptionsBtn)
+      document.body.appendChild(this.coordinatesColumnOptionsBtn)
     }
   }
 
@@ -433,6 +279,69 @@ class TablePlacingManager {
 
   onEditorContentSelectionChange(selection: Selection): void {
     this.onSelectionChangeOverTableCells(selection)
+  }
+
+  private jumpToNextCell(): void {
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
+    if (!selection) return
+    const focusedCellElement = this.tableColumnsRowsManager.getFocusedCellElement()
+    if (!focusedCellElement) return
+    const currentRow = this.getRowFromCellElement(focusedCellElement)
+    if (!currentRow) return
+    let nextCell: HTMLElement | null = null
+    if (currentRow.lastElementChild?.isSameNode(focusedCellElement)) {
+      const nextRow = currentRow.nextElementSibling
+      if (!nextRow) return
+      nextCell = nextRow.querySelector<HTMLElement>(tablePlacingStylish.getTableCellTagName())
+    } else {
+      nextCell = focusedCellElement.nextElementSibling as HTMLElement
+    }
+    if (!nextCell) return
+    CodeVCNEditorEngine.moveCaretToElement(nextCell, selection, document.createRange())
+  }
+
+  private jumpToCellInRelatedRow(type: "up" | "down"): void {
+    const selection = CodeVCNEditorEngine.checkIsFocusingInEditorContent()
+    if (!selection) return
+    const focusedCellElement = this.tableColumnsRowsManager.getFocusedCellElement()
+    if (!focusedCellElement) return
+    const currentRow = this.getRowFromCellElement(focusedCellElement)
+    if (!currentRow) return
+    if (type === "up") {
+      const relatedRow = currentRow.previousElementSibling
+      if (!relatedRow) return
+      const relatedCell = relatedRow.querySelectorAll<HTMLElement>(tablePlacingStylish.getTableCellTagName())[
+        getElementIndexInParent(focusedCellElement)
+      ]
+      if (!relatedCell) return
+      CodeVCNEditorEngine.moveCaretToElement(relatedCell, selection, document.createRange())
+    } else if (type === "down") {
+      const relatedRow = currentRow.nextElementSibling
+      if (!relatedRow) return
+      const relatedCell = relatedRow.querySelectorAll<HTMLElement>(tablePlacingStylish.getTableCellTagName())[
+        getElementIndexInParent(focusedCellElement)
+      ]
+      if (!relatedCell) return
+      CodeVCNEditorEngine.moveCaretToElement(relatedCell, selection, document.createRange())
+    }
+  }
+
+  onEditorContentKeydown(e: KeyboardEvent): void {
+    switch (e.key) {
+      case "Tab":
+        e.preventDefault()
+        this.jumpToNextCell()
+        break
+      case "ArrowDown":
+        e.preventDefault()
+        this.jumpToCellInRelatedRow("down")
+        break
+      case "ArrowUp":
+        e.preventDefault()
+        this.jumpToCellInRelatedRow("up")
+        break
+    }
+    // các key ArrowLeft, ArrowRight đã được hỗ trợ sẵn
   }
 }
 

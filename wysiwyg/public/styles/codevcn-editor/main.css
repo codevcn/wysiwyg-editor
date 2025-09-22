@@ -107,14 +107,18 @@
   width: 100%;
   margin: 4px 0;
   table-layout: fixed; /* Cột chia đều bất kể nội dung */
+  position: relative;
 }
-.NAME-codevcn-editor .NAME-editor-content table td {
+.NAME-codevcn-editor .NAME-editor-content table tr.STATE-dragging {
+  opacity: 0.5;
+}
+.NAME-codevcn-editor .NAME-editor-content table tr td {
   border: 1px solid var(--vcn-table-border-cl);
   padding: 4px 8px;
+  position: relative;
 }
-.NAME-codevcn-editor .NAME-editor-content table td.STATE-highlight-cell {
+.NAME-codevcn-editor .NAME-editor-content table tr td.STATE-highlight-cell {
   outline: 2px solid gray;
-  border-radius: 4px;
 }
 
 .NAME-add-image-container .NAME-add-image-type-buttons.STATE-upload .NAME-add-image-btn-upload {
@@ -173,6 +177,7 @@
 .NAME-popover {
   clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
   transition: clip-path 0.2s ease-in-out;
+  width: max-content;
 }
 .NAME-popover.STATE-show {
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
@@ -194,8 +199,12 @@
 
 .NAME-add-table-row-btn-container {
   display: none;
-  position: fixed;
+  position: absolute;
+  top: 100%;
+  left: 0;
   z-index: 90;
+  width: 100%;
+  padding-top: 6px;
 }
 .NAME-add-table-row-btn-container.STATE-show {
   display: flex;
@@ -203,33 +212,39 @@
 
 .NAME-add-table-column-btn-container {
   display: none;
-  position: fixed;
+  position: absolute;
+  top: 0;
+  left: 100%;
   z-index: 90;
+  height: 100%;
+  padding-left: 6px;
 }
 .NAME-add-table-column-btn-container.STATE-show {
   display: flex;
 }
 
 .NAME-coordinates-row-options {
-  opacity: 0;
-  pointer-events: none;
-  position: fixed;
+  display: none;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translate(-50%, -50%);
   z-index: 99;
 }
 .NAME-coordinates-row-options.STATE-show {
-  opacity: 1;
-  pointer-events: auto;
+  display: block;
 }
 
 .NAME-coordinates-column-options {
-  opacity: 0;
-  pointer-events: none;
-  position: fixed;
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 99;
 }
 .NAME-coordinates-column-options.STATE-show {
-  opacity: 1;
-  pointer-events: auto;
+  display: block;
 }
 
 [hidden] {

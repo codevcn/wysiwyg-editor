@@ -22,7 +22,7 @@ export class DropdownManager {
       ...LitHTMLHelper.createElementFromRenderer(DropdownMenu, [{ options: params[0].options }]).children
     )
     this.moveDropdownMenuToTriggerPosition(trigger)
-    PageLayoutHelper.detectCollisionWithViewportEdges(dropdownMenuElement)
+    PageLayoutHelper.detectCollisionWithViewportEdges(dropdownMenuElement, 10)
     nextFrame(() => {
       dropdownMenuElement.classList.add("STATE-show")
       dropdownMenuElement.dataset.showing = "true"

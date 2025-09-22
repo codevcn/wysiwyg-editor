@@ -7,11 +7,25 @@ export class PopoverManager {
   private static readonly initialRootPopoverId: string = "initial-root-popover"
   private static readonly popoverElement: HTMLElement = this.initPopover(this.initialRootPopoverId)
 
-  private static moveArrowPosition(popover: HTMLElement): void {
+  private static moveArrowPosition(triggerRect: DOMRect, popover: HTMLElement): void {
     const arrowElement = popover.querySelector<HTMLElement>(".NAME-popover-arrow")
     if (arrowElement) {
+      const triggerRectLeft = triggerRect.left
+      const popoverRect = popover.getBoundingClientRect()
+      const popoverRectLeft = popoverRect.left
+      const popoverRectWidth = popoverRect.width
+      let minLeftGap: number = 10
+      if (triggerRectLeft > popoverRectLeft) {
+        const deltaGap = triggerRectLeft - popoverRectLeft + triggerRect.width / 2
+        const maxRightGap = popoverRectWidth - arrowElement.getBoundingClientRect().width - minLeftGap
+        if (deltaGap > maxRightGap) {
+          minLeftGap = maxRightGap
+        } else if (deltaGap > minLeftGap) {
+          minLeftGap = deltaGap
+        }
+      }
       arrowElement.style.cssText += `
-        left: 10px;
+        left: ${minLeftGap}px;
       `
     }
   }
@@ -22,8 +36,9 @@ export class PopoverManager {
       left: ${triggerRect.left}px;
       top: ${triggerRect.top + triggerRect.height}px;
     `
-    PageLayoutHelper.detectCollisionWithViewportEdges(popover, 10)
-    this.moveArrowPosition(popover)
+    const collisionMargin: number = 10
+    PageLayoutHelper.detectCollisionWithViewportEdges(popover, collisionMargin)
+    this.moveArrowPosition(triggerRect, popover)
   }
 
   static showPopover<TPopover extends typeof Popover>(
